@@ -55,7 +55,7 @@ const HomeScreen = () => {
   // user.settings.vibrations # son vibrations
 
   const [stores, setStores] = useState([]);
-  const [selectedStoreId, setSelectedStoreId] = useState("");
+  const [selectedStoreId, setSelectedStoreId] = useState("store_eip");
 
   React.useEffect(() => {
     (async () => {
@@ -194,11 +194,20 @@ const HomeScreen = () => {
   const processPayment = async () => {
     if (!user?.uid || validBasketLength === 0) return;
 
+    const totalAmount = basket.reduce((sum, item) => {
+      const price = parseFloat(item?.price);
+      const quantity = item?.quantity || 1;
+
+      if (!isNaN(price)) {
+        return sum + price * quantity;
+      }
+
+      return sum;
+    }, 0);
+
     Alert.alert(
       "Confirmer le paiement",
-      `Montant total: ${basket
-        .reduce((sum, item) => sum + item.price * (item.quantity || 1), 0)
-        .toFixed(2)}€\n\nConfirmer le paiement ?`,
+      `Montant total: ${totalAmount.toFixed(2)}€\n\nConfirmer le paiement ?`,
       [
         { text: "Annuler", style: "cancel" },
         {

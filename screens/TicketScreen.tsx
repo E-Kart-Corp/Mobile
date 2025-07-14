@@ -34,6 +34,12 @@ import {
 import { auth, db } from "../config";
 import { onAuthStateChanged } from "firebase/auth";
 import { useAuth } from "../authContext";
+import {
+  formatDate,
+  getStatusColor,
+  getStatusIcon,
+  getStatusText,
+} from "../component/getStatus";
 
 const TicketsScreen = () => {
   const insets = useSafeAreaInsets();
@@ -262,9 +268,7 @@ const TicketsScreen = () => {
                     </Text>
                   </View>
                   <Text style={{ fontSize: 14, fontWeight: "bold" }}>
-                    {typeof item?.totalAmount === "number"
-                      ? `${item.totalAmount.toFixed(2)}€`
-                      : "N/A"}
+                    {item.totalAmount + "€"}
                   </Text>
                 </View>
               </View>

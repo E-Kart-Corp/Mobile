@@ -44,10 +44,32 @@ const LoginScreen = () => {
         index: 0,
         routes: [{ name: "TabStack" }],
       });
-    } catch (error) {
-      Alert.alert("Erreur", error.message);
+    } catch (error: any) {
+      console.log("Firebase login error:", {
+        code: error.code,
+        message: error.message,
+        name: error.name,
+      });
+
+      switch (error.code) {
+        case "auth/invalid-email":
+          Alert.alert("Erreur", "Adresse email invalide.");
+          break;
+        case "auth/user-not-found":
+          Alert.alert("Erreur", "Aucun utilisateur trouvé avec cet email.");
+          break;
+        case "auth/wrong-password":
+          Alert.alert("Erreur", "Mot de passe incorrect.");
+          break;
+        case "auth/invalid-credential":
+          Alert.alert("Erreur", "Email ou mot de passe invalide.");
+          break;
+        default:
+          Alert.alert("Erreur", error.message || "Une erreur est survenue.");
+      }
     }
   };
+
   const insets = useSafeAreaInsets();
 
   return (
