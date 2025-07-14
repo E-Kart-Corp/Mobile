@@ -130,8 +130,10 @@ const HomeScreen = () => {
       typeof item?.price === "number" && !isNaN(item.price) && item.product_name
   ).length;
 
+  const realBasketLength = basket.length;
+
   const abandonBasket = async () => {
-    if (!user?.uid || validBasketLength === 0) return;
+    if (!user?.uid || realBasketLength === 0) return;
 
     Alert.alert(
       "Abandonner le panier",
@@ -514,8 +516,8 @@ const HomeScreen = () => {
               <TouchableOpacity
                 onPress={() => {
                   Alert.alert(
-                    "Changer de magasin",
-                    "Quel magasin souhaitez-vous choisir ?",
+                    "Se déconnecter du magasin",
+                    "Souhaitez-vous vous déconnecter ?",
                     isSimulator
                       ? stores.map((store) => ({
                           text: store.name || store.id,
@@ -526,6 +528,7 @@ const HomeScreen = () => {
                             text: "Disconnect",
                             onPress: () => setSelectedStoreId(null),
                           },
+                          { text: "Non", onPress: () => {} },
                         ]
                   );
                 }}
