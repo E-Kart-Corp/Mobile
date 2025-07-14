@@ -597,8 +597,18 @@ const HomeScreen = () => {
                       // marginBottom: 20,
                     }}
                   >
-                    <Button title="Prendre une photo" onPress={takePicture} />
-                    {/* <View style={{ height: 50 }} /> */}
+                    {/* <Button title="Prendre une photo" onPress={takePicture} /> */}
+                    <TouchableOpacity
+                      onPress={takePicture}
+                      accessible={true}
+                      accessibilityLabel="Prendre une photo"
+                      accessibilityHint="Valide votre panier"
+                      accessibilityRole="button"
+                    >
+                      <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+                        Prendre une photo
+                      </Text>
+                    </TouchableOpacity>
                   </View>
                 </CameraView>
               ) : (

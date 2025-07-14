@@ -2,12 +2,9 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   TextInput,
-  Button,
   Alert,
   Image,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
 } from "react-native";
@@ -36,6 +33,7 @@ const LoginScreen = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const [email, setEmail] = useState("briceuh290@gmail.com");
   const [password, setPassword] = useState("Password");
+  const insets = useSafeAreaInsets();
 
   const handleLogin = async () => {
     try {
@@ -45,12 +43,7 @@ const LoginScreen = () => {
         routes: [{ name: "TabStack" }],
       });
     } catch (error: any) {
-      console.log("Firebase login error:", {
-        code: error.code,
-        message: error.message,
-        name: error.name,
-      });
-
+      console.log("Firebase login error:", error);
       switch (error.code) {
         case "auth/invalid-email":
           Alert.alert("Erreur", "Adresse email invalide.");
@@ -70,14 +63,12 @@ const LoginScreen = () => {
     }
   };
 
-  const insets = useSafeAreaInsets();
-
   return (
     <View style={{ flex: 1 }}>
       <BackGround middle={false} />
-      {/* <SafeAreaView style={{ flex: 1 }}> */}
       <ScrollView>
         <View style={{ height: insets.top }} />
+
         <View
           style={{
             width: "100%",
@@ -87,13 +78,12 @@ const LoginScreen = () => {
           }}
         >
           <Image
-            style={{
-              top: 0,
-              left: 0,
-            }}
             source={require("./../../assets/logo_long.png")}
+            style={{ top: 0, left: 0 }}
+            accessible={false}
           />
         </View>
+
         <TextInput
           style={{
             width: "90%",
@@ -105,17 +95,18 @@ const LoginScreen = () => {
             borderRadius: 18,
             shadowOpacity: 0.5,
             shadowRadius: 3,
-            shadowOffset: {
-              height: 0,
-              width: 0,
-            },
+            shadowOffset: { height: 0, width: 0 },
           }}
           placeholder="Email"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
+          accessible={true}
+          accessibilityLabel="Champ de saisie email"
+          accessibilityHint="Entrez votre adresse email"
         />
+
         <TextInput
           style={{
             width: "90%",
@@ -128,21 +119,24 @@ const LoginScreen = () => {
             marginBottom: 16,
             shadowOpacity: 0.5,
             shadowRadius: 3,
-            shadowOffset: {
-              height: 0,
-              width: 0,
-            },
+            shadowOffset: { height: 0, width: 0 },
           }}
           placeholder="Mot de passe"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
           autoCapitalize="none"
+          accessible={true}
+          accessibilityLabel="Champ de saisie mot de passe"
+          accessibilityHint="Entrez votre mot de passe"
         />
+
         <TouchableOpacity
-          onPress={() => {
-            navigation.navigate("LostPassword");
-          }}
+          onPress={() => navigation.navigate("LostPassword")}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Mot de passe oublié"
+          accessibilityHint="Navigue vers l'écran de récupération du mot de passe"
         >
           <Text
             style={{
@@ -154,6 +148,7 @@ const LoginScreen = () => {
             Mot de passe oublié ?
           </Text>
         </TouchableOpacity>
+
         <View style={{ width: "100%", alignItems: "center" }}>
           <TouchableOpacity
             onPress={handleLogin}
@@ -169,11 +164,12 @@ const LoginScreen = () => {
               shadowOpacity: 0.5,
               shadowRadius: 3,
               shadowColor: "rgba(0,122,84, 1)",
-              shadowOffset: {
-                height: 0,
-                width: 0,
-              },
+              shadowOffset: { height: 0, width: 0 },
             }}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Se connecter"
+            accessibilityHint="Se connecter avec vos identifiants"
           >
             <Text style={{ color: "white" }}>Se connecter</Text>
           </TouchableOpacity>
@@ -181,9 +177,11 @@ const LoginScreen = () => {
       </ScrollView>
 
       <TouchableOpacity
-        onPress={() => {
-          navigation.navigate("CheckForm");
-        }}
+        onPress={() => navigation.navigate("CheckForm")}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="Version Test Forme"
+        accessibilityHint="Navigue vers la version test"
       >
         <Text
           style={{
@@ -196,10 +194,13 @@ const LoginScreen = () => {
           Version Test Forme
         </Text>
       </TouchableOpacity>
+
       <TouchableOpacity
-        onPress={() => {
-          navigation.navigate("SignUp");
-        }}
+        onPress={() => navigation.navigate("SignUp")}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="S'inscrire"
+        accessibilityHint="Navigue vers l'écran de création de compte"
       >
         <Text
           style={{
@@ -213,27 +214,8 @@ const LoginScreen = () => {
           S'inscrire ?
         </Text>
       </TouchableOpacity>
-      {/* </SafeAreaView> */}
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 16 },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 24,
-  },
-  input: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-  },
-});
 
 export default LoginScreen;
