@@ -11,6 +11,7 @@ import {
   Alert,
   Dimensions,
   Vibration,
+  AccessibilityInfo,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { onAuthStateChanged } from "firebase/auth";
@@ -50,6 +51,7 @@ const HomeScreen = () => {
   const [hasPermission, setHasPermission] = useState(null);
   const [cameraRef, setCameraRef] = useState(null);
   const [isSimulator, setIsSimulator] = useState(false);
+  const [isScreenReaderEnabled, setIsScreenReaderEnabled] = useState(false);
   const navigation = useNavigation<LoginScreenNavigationProp>();
 
   // user.settings.sounds # son boolean
@@ -57,6 +59,28 @@ const HomeScreen = () => {
 
   const [stores, setStores] = useState([]);
   const [selectedStoreId, setSelectedStoreId] = useState("store_eip");
+
+  // Vérifier si VoiceOver est activé
+  useEffect(() => {
+    const checkScreenReaderStatus = async () => {
+      const isEnabled = await AccessibilityInfo.isScreenReaderEnabled();
+      setIsScreenReaderEnabled(isEnabled);
+    };
+
+    checkScreenReaderStatus();
+
+    const subscription = AccessibilityInfo.addEventListener(
+      "screenReaderChanged",
+      setIsScreenReaderEnabled
+    );
+
+    return () => subscription?.remove();
+  }, []);
+
+  // Fonction pour annoncer des messages à VoiceOver
+  const announceToScreenReader = (message) => {
+    AccessibilityInfo.announceForAccessibility(message);
+  };
 
   React.useEffect(() => {
     (async () => {
@@ -71,17 +95,23 @@ const HomeScreen = () => {
 
   const takePicture = async () => {
     if (cameraRef) {
+      announceToScreenReader("Prise de photo en cours");
+
       const photo = await cameraRef.takePictureAsync({
         quality: 0.1,
       });
+
       if (user.settings.vibrations) Vibration.vibrate();
       if (user.settings.sounds) {
         player.seekTo(0);
         player.play();
       }
+
       setImage(photo.uri);
       sendImage(photo.uri);
       triggerFeedback();
+
+      announceToScreenReader("Photo prise et envoyée pour analyse");
     }
   };
 
@@ -115,6 +145,13 @@ const HomeScreen = () => {
         if (docSnapshot.exists()) {
           const basketData = docSnapshot.data()?.current_kart?.kart || [];
           setBasket(basketData);
+
+          // Annoncer les changements du panier
+          if (basketData.length > 0) {
+            announceToScreenReader(
+              `Panier mis à jour. ${basketData.length} articles`
+            );
+          }
         } else {
           setBasket([]);
         }
@@ -147,6 +184,8 @@ const HomeScreen = () => {
           style: "destructive",
           onPress: async () => {
             try {
+              announceToScreenReader("Abandon du panier en cours");
+
               // Calculer le montant total
               const totalAmount = basket.reduce((sum, item) => {
                 const price = parseFloat(item?.price);
@@ -179,12 +218,15 @@ const HomeScreen = () => {
               setBasket([]);
               setModalVisible(false);
 
+              announceToScreenReader("Panier abandonné avec succès");
+
               Alert.alert(
                 "Panier abandonné",
                 "Votre panier a été abandonné et sauvegardé dans vos tickets."
               );
             } catch (error) {
               console.log("Erreur lors de l'abandon du panier :", error);
+              announceToScreenReader("Erreur lors de l'abandon du panier");
               Alert.alert("Erreur", "Impossible d'abandonner le panier");
             }
           },
@@ -216,6 +258,8 @@ const HomeScreen = () => {
           text: "Payer",
           onPress: async () => {
             try {
+              announceToScreenReader("Paiement en cours, veuillez patienter");
+
               // Simuler un délai de paiement
               Alert.alert("Paiement en cours...", "Veuillez patienter");
 
@@ -253,6 +297,12 @@ const HomeScreen = () => {
 
               // Simuler un délai puis afficher succès
               setTimeout(() => {
+                announceToScreenReader(
+                  `Paiement réussi ! Montant payé: ${totalAmount.toFixed(
+                    2
+                  )} euros`
+                );
+
                 Alert.alert(
                   "Paiement réussi ! 🎉",
                   `Montant payé: ${totalAmount.toFixed(
@@ -269,6 +319,7 @@ const HomeScreen = () => {
               }, 1500);
             } catch (error) {
               console.log("Erreur lors du paiement :", error);
+              announceToScreenReader("Erreur lors du paiement");
               Alert.alert(
                 "Erreur de paiement",
                 "Le paiement a échoué. Veuillez réessayer."
@@ -365,6 +416,8 @@ const HomeScreen = () => {
       return;
     }
 
+    announceToScreenReader("Sélection d'image en cours");
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: "images",
       allowsEditing: false,
@@ -374,6 +427,7 @@ const HomeScreen = () => {
 
     if (!result.canceled) {
       setImage(result.assets[0].uri);
+      announceToScreenReader("Image sélectionnée avec succès");
     }
   };
 
@@ -386,6 +440,8 @@ const HomeScreen = () => {
       Alert.alert("Erreur", "Aucune image sélectionnée");
       return;
     }
+
+    announceToScreenReader("Envoi de l'image pour analyse");
 
     const fileType = isSimulator
       ? image.split(".").pop()
@@ -415,8 +471,11 @@ const HomeScreen = () => {
 
       const result = await response.json();
       console.log(result);
+
+      announceToScreenReader("Image analysée avec succès");
     } catch (error) {
       console.error("Erreur lors de l'envoi de l'image :", error);
+      announceToScreenReader("Erreur lors de l'envoi de l'image");
       Alert.alert("Erreur", "L'envoi de l'image a échoué");
     }
   };
@@ -428,74 +487,104 @@ const HomeScreen = () => {
 
   if (!isSimulator && !selectedStoreId) {
     return (
-      <CameraView
-        style={{
-          flex: 1,
-          width: "100%",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-        ref={(ref) => setCameraRef(ref)}
-        barcodeScannerSettings={{
-          barcodeTypes: ["qr"],
-        }}
-        onBarcodeScanned={async ({ data }) => {
-          if (hasScanned) return;
-          setHasScanned(true);
+      <View
+        style={{ flex: 1 }}
+        accessible={true}
+        accessibilityLabel="Écran de scan QR Code"
+        accessibilityHint="Positionnez le QR Code du magasin dans le cadre pour vous connecter"
+      >
+        <CameraView
+          style={{
+            flex: 1,
+            width: "100%",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          ref={(ref) => setCameraRef(ref)}
+          barcodeScannerSettings={{
+            barcodeTypes: ["qr"],
+          }}
+          onBarcodeScanned={async ({ data }) => {
+            if (hasScanned) return;
+            setHasScanned(true);
 
-          try {
-            const scannedId = data.trim();
-            const storeRef = doc(db, "commerce", scannedId);
-            const storeSnap = await getDoc(storeRef);
+            announceToScreenReader("QR Code détecté, vérification en cours");
 
-            if (storeSnap.exists()) {
-              setSelectedStoreId(scannedId);
-              setErrorMessage("");
-              setTimeout(() => setHasScanned(false), 2000);
-            } else {
-              setErrorMessage("Ce magasin n'existe pas.");
+            try {
+              const scannedId = data.trim();
+              const storeRef = doc(db, "commerce", scannedId);
+              const storeSnap = await getDoc(storeRef);
+
+              if (storeSnap.exists()) {
+                setSelectedStoreId(scannedId);
+                setErrorMessage("");
+                announceToScreenReader(
+                  `Connexion réussie au magasin ${scannedId}`
+                );
+                setTimeout(() => setHasScanned(false), 2000);
+              } else {
+                setErrorMessage("Ce magasin n'existe pas.");
+                announceToScreenReader("Erreur : Ce magasin n'existe pas");
+                setTimeout(() => setHasScanned(false), 2000);
+              }
+            } catch (err) {
+              console.error("Erreur lors de la vérification du magasin :", err);
+              setErrorMessage("Une erreur est survenue.");
+              announceToScreenReader(
+                "Une erreur est survenue lors de la vérification"
+              );
               setTimeout(() => setHasScanned(false), 2000);
             }
-          } catch (err) {
-            console.error("Erreur lors de la vérification du magasin :", err);
-            setErrorMessage("Une erreur est survenue.");
-            setTimeout(() => setHasScanned(false), 2000);
-          }
-        }}
-      >
-        <View
-          style={{
-            width: 200,
-            height: 200,
-            borderWidth: 4,
-            zIndex: 999,
-            alignSelf: "center",
-            alignItems: "center",
-          }}
-        ></View>
-
-        <View
-          style={{
-            marginTop: 10,
-            paddingHorizontal: 10,
-            paddingVertical: 10,
-            backgroundColor: "white",
-            borderRadius: 10,
           }}
         >
-          <Text style={{ fontWeight: "bold" }}>
-            Veuillez scanner le QrCode du commerce
-          </Text>
-          {errorMessage ? (
-            <Text style={{ color: "red", marginTop: 5 }}>{errorMessage}</Text>
-          ) : null}
-        </View>
-      </CameraView>
+          <View
+            style={{
+              width: 200,
+              height: 200,
+              borderWidth: 4,
+              zIndex: 999,
+              alignSelf: "center",
+              alignItems: "center",
+            }}
+            accessible={true}
+            accessibilityLabel="Cadre de scan QR Code"
+            accessibilityHint="Positionnez le QR Code du magasin dans ce cadre"
+          ></View>
+
+          <View
+            style={{
+              marginTop: 10,
+              paddingHorizontal: 10,
+              paddingVertical: 10,
+              backgroundColor: "white",
+              borderRadius: 10,
+            }}
+            accessible={true}
+            accessibilityLabel={
+              errorMessage
+                ? `Erreur : ${errorMessage}`
+                : "Veuillez scanner le QR Code du commerce"
+            }
+            accessibilityRole="text"
+          >
+            <Text style={{ fontWeight: "bold" }}>
+              Veuillez scanner le QrCode du commerce
+            </Text>
+            {errorMessage ? (
+              <Text style={{ color: "red", marginTop: 5 }}>{errorMessage}</Text>
+            ) : null}
+          </View>
+        </CameraView>
+      </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "lightgray" }}>
+    <View
+      style={{ flex: 1, backgroundColor: "lightgray" }}
+      accessible={false}
+      accessibilityLabel="Écran principal de l'application"
+    >
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         {user ? (
           <>
@@ -512,6 +601,9 @@ const HomeScreen = () => {
                 alignItems: "center",
                 justifyContent: "space-between",
               }}
+              accessible={true}
+              accessibilityLabel="Barre de navigation"
+              accessibilityRole="toolbar"
             >
               <View>
                 <Image
@@ -522,6 +614,9 @@ const HomeScreen = () => {
                     marginVertical: 16,
                     borderRadius: 8,
                   }}
+                  accessible={true}
+                  accessibilityLabel="Logo de l'application"
+                  accessibilityRole="image"
                 />
               </View>
               <TouchableOpacity
@@ -532,17 +627,29 @@ const HomeScreen = () => {
                     isSimulator
                       ? stores.map((store) => ({
                           text: store.name || store.id,
-                          onPress: () => setSelectedStoreId(store.id),
+                          onPress: () => {
+                            setSelectedStoreId(store.id);
+                            announceToScreenReader(
+                              `Magasin changé pour ${store.name || store.id}`
+                            );
+                          },
                         }))
                       : [
                           {
                             text: "Disconnect",
-                            onPress: () => setSelectedStoreId(null),
+                            onPress: () => {
+                              setSelectedStoreId(null);
+                              announceToScreenReader("Déconnecté du magasin");
+                            },
                           },
                           { text: "Non", onPress: () => {} },
                         ]
                   );
                 }}
+                accessible={true}
+                accessibilityLabel={`Magasin actuel : ${selectedStoreId}. Appuyez pour changer`}
+                accessibilityHint="Ouvre les options pour changer de magasin"
+                accessibilityRole="button"
               >
                 <View style={{ flexDirection: "row" }}>
                   <IconLocation />
@@ -563,6 +670,10 @@ const HomeScreen = () => {
                 onPress={() => {
                   navigation.navigate("Profile");
                 }}
+                accessible={true}
+                accessibilityLabel="Aller au profil utilisateur"
+                accessibilityHint="Ouvre la page de profil"
+                accessibilityRole="button"
               >
                 <Image
                   source={{
@@ -574,6 +685,9 @@ const HomeScreen = () => {
                     marginVertical: 16,
                     borderRadius: 25,
                   }}
+                  accessible={true}
+                  accessibilityLabel="Photo de profil"
+                  accessibilityRole="image"
                 />
               </TouchableOpacity>
             </View>
@@ -583,6 +697,9 @@ const HomeScreen = () => {
                 <CameraView
                   style={{ flex: 1, width: "100%" }}
                   ref={(ref) => setCameraRef(ref)}
+                  accessible={true}
+                  accessibilityLabel="Caméra pour scanner les produits"
+                  accessibilityHint="Pointez la caméra vers un produit et appuyez sur le bouton pour l'ajouter au panier"
                 >
                   <View
                     style={{
@@ -601,21 +718,57 @@ const HomeScreen = () => {
                     <TouchableOpacity
                       onPress={takePicture}
                       accessible={true}
-                      accessibilityLabel="Prendre une photo"
-                      accessibilityHint="Valide votre panier"
+                      accessibilityLabel="Prendre une photo du produit"
+                      accessibilityHint="Capture une photo du produit pour l'ajouter au panier"
                       accessibilityRole="button"
+                      style={{
+                        backgroundColor: "rgba(0, 0, 0, 0.7)",
+                        padding: 15,
+                        borderRadius: 10,
+                      }}
                     >
-                      <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+                      <Text
+                        style={{
+                          fontSize: 20,
+                          fontWeight: "bold",
+                          color: "white",
+                        }}
+                      >
                         Prendre une photo
                       </Text>
                     </TouchableOpacity>
                   </View>
                 </CameraView>
               ) : (
-                <>
-                  <Button title="Pick an image" onPress={pickImage} />
+                <View
+                  style={{
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flex: 1,
+                  }}
+                  accessible={true}
+                  accessibilityLabel="Mode simulateur"
+                >
+                  <TouchableOpacity
+                    onPress={pickImage}
+                    accessible={true}
+                    accessibilityLabel="Sélectionner une image"
+                    accessibilityHint="Ouvre la galerie pour sélectionner une image de produit"
+                    accessibilityRole="button"
+                    style={{
+                      backgroundColor: "#007A5E",
+                      padding: 15,
+                      borderRadius: 10,
+                      marginBottom: 20,
+                    }}
+                  >
+                    <Text style={{ color: "white", fontWeight: "bold" }}>
+                      Sélectionner une image
+                    </Text>
+                  </TouchableOpacity>
+
                   {image && (
-                    <>
+                    <View style={{ alignItems: "center" }}>
                       <Image
                         source={{ uri: image }}
                         style={{
@@ -624,23 +777,49 @@ const HomeScreen = () => {
                           marginVertical: 16,
                           borderRadius: 8,
                         }}
+                        accessible={true}
+                        accessibilityLabel="Image sélectionnée du produit"
+                        accessibilityRole="image"
                       />
-                      <Button title="Send Image" onPress={sendImage} />
-                    </>
+                      <TouchableOpacity
+                        onPress={sendImage}
+                        accessible={true}
+                        accessibilityLabel="Envoyer l'image"
+                        accessibilityHint="Envoie l'image sélectionnée pour analyse et ajout au panier"
+                        accessibilityRole="button"
+                        style={{
+                          backgroundColor: "#007A5E",
+                          padding: 15,
+                          borderRadius: 10,
+                        }}
+                      >
+                        <Text style={{ color: "white", fontWeight: "bold" }}>
+                          Envoyer l'image
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   )}
-                </>
+                </View>
               )}
             </>
           </>
         ) : (
-          <Text>
+          <Text
+            accessible={true}
+            accessibilityLabel="Veuillez vous connecter pour utiliser l'application"
+            accessibilityRole="text"
+          >
             Veuillez vous connecter pour voir votre panier et envoyer des
             images.
           </Text>
         )}
       </View>
 
-      <ButtonOpenModal basket={basket} setModalVisible={setModalVisible} />
+      <ButtonOpenModal
+        basket={basket}
+        setModalVisible={setModalVisible}
+        // Assurez-vous que ce composant a aussi les bonnes propriétés d'accessibilité
+      />
 
       <ModalList
         basket={basket}
@@ -648,33 +827,10 @@ const HomeScreen = () => {
         processPayment={processPayment}
         modalVisible={modalVisible}
         setModalVisible={setModalVisible}
+        // Assurez-vous que ce composant a aussi les bonnes propriétés d'accessibilité
       />
     </View>
   );
 };
 
 export default HomeScreen;
-
-// export default function HomeScreen() {
-//   const player = useAudioPlayer(audioSource);
-
-//   return (
-//     <View
-//       style={{
-//         flex: 1,
-//         justifyContent: "center",
-//         backgroundColor: "#ecf0f1",
-//         padding: 10,
-//       }}
-//     >
-//       <Button title="Play Sound" onPress={() => player.play()} />
-//       <Button
-//         title="Replay Sound"
-//         onPress={() => {
-//           player.seekTo(0);
-//           player.play();
-//         }}
-//       />
-//     </View>
-//   );
-// }

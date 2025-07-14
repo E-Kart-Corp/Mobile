@@ -28,8 +28,6 @@ export const ModalList = ({
   const [nutritionData, setNutritionData] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // console.log(basket[basket.length - 1])
-
   const validBasketLength = basket.filter(
     (item) =>
       typeof item?.price === "number" && !isNaN(item.price) && item.product_name
@@ -55,7 +53,6 @@ export const ModalList = ({
     setSelectedProduct(product);
 
     try {
-      // Extraire le code-barres du produit
       const barcode = product.barcode || product.code || product.id;
 
       if (!barcode) {
@@ -103,12 +100,27 @@ export const ModalList = ({
     const ingredients = data.ingredients_text || "Non disponible";
 
     return (
-      <ScrollView style={{ flex: 1 }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        accessible={true}
+        accessibilityLabel="Informations nutritionnelles du produit"
+        accessibilityRole="scrollbar"
+      >
         <View style={{ padding: 20 }}>
           {/* Informations générales */}
-          <View style={{ marginBottom: 20 }}>
+          <View
+            style={{ marginBottom: 20 }}
+            accessible={true}
+            accessibilityRole="text"
+            accessibilityLabel={`Informations générales du produit. Nom: ${
+              data.product_name || "Non disponible"
+            }. Marque: ${data.brands || "Non disponible"}. Catégorie: ${
+              data.categories || "Non disponible"
+            }`}
+          >
             <Text
               style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}
+              accessibilityRole="header"
             >
               Informations générales
             </Text>
@@ -127,9 +139,15 @@ export const ModalList = ({
           </View>
 
           {/* Ingrédients */}
-          <View style={{ marginBottom: 20 }}>
+          <View
+            style={{ marginBottom: 20 }}
+            accessible={true}
+            accessibilityRole="text"
+            accessibilityLabel={`Ingrédients: ${ingredients}`}
+          >
             <Text
               style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}
+              accessibilityRole="header"
             >
               Ingrédients
             </Text>
@@ -140,12 +158,33 @@ export const ModalList = ({
           <View style={{ marginBottom: 20 }}>
             <Text
               style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}
+              accessibilityRole="header"
             >
               Valeurs nutritionnelles (pour 100g/100ml)
             </Text>
 
             {Object.keys(nutriments).length > 0 ? (
-              <View>
+              <View
+                accessible={true}
+                accessibilityRole="text"
+                accessibilityLabel={`Valeurs nutritionnelles pour 100 grammes ou 100 millilitres. ${
+                  nutriments.energy_kcal
+                    ? `Énergie: ${nutriments.energy_kcal} kilocalories. `
+                    : ""
+                }${
+                  nutriments.fat
+                    ? `Matières grasses: ${nutriments.fat} grammes. `
+                    : ""
+                }${
+                  nutriments.carbohydrates
+                    ? `Glucides: ${nutriments.carbohydrates} grammes. `
+                    : ""
+                }${
+                  nutriments.proteins
+                    ? `Protéines: ${nutriments.proteins} grammes. `
+                    : ""
+                }${nutriments.salt ? `Sel: ${nutriments.salt} grammes. ` : ""}`}
+              >
                 {nutriments.energy_kj && (
                   <View
                     style={{
@@ -264,9 +303,15 @@ export const ModalList = ({
 
           {/* Nutri-Score */}
           {data.nutriscore_grade && (
-            <View style={{ marginBottom: 20 }}>
+            <View
+              style={{ marginBottom: 20 }}
+              accessible={true}
+              accessibilityRole="text"
+              accessibilityLabel={`Nutri-Score: ${data.nutriscore_grade.toUpperCase()}`}
+            >
               <Text
                 style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}
+                accessibilityRole="header"
               >
                 Nutri-Score
               </Text>
@@ -293,9 +338,15 @@ export const ModalList = ({
 
           {/* Allergènes */}
           {data.allergens && (
-            <View style={{ marginBottom: 20 }}>
+            <View
+              style={{ marginBottom: 20 }}
+              accessible={true}
+              accessibilityRole="text"
+              accessibilityLabel={`Allergènes: ${data.allergens}`}
+            >
               <Text
                 style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}
+                accessibilityRole="header"
               >
                 Allergènes
               </Text>
@@ -331,6 +382,9 @@ export const ModalList = ({
       transparent={true}
       visible={modalVisible}
       onRequestClose={() => setModalVisible(false)}
+      accessible={true}
+      accessibilityLabel="Panier d'achat"
+      accessibilityRole="dialog"
     >
       <View
         style={{
@@ -374,9 +428,14 @@ export const ModalList = ({
                   alignItems: "center",
                   marginRight: 10,
                 }}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Retour au panier"
+                accessibilityHint="Appuyez pour revenir à la vue du panier"
               >
                 <Text
                   style={{ color: "white", fontSize: 18, fontWeight: "bold" }}
+                  importantForAccessibility="no"
                 >
                   ←
                 </Text>
@@ -388,6 +447,7 @@ export const ModalList = ({
                   fontWeight: "bold",
                   flex: 1,
                 }}
+                accessibilityRole="header"
               >
                 Informations nutritionnelles
               </Text>
@@ -404,9 +464,14 @@ export const ModalList = ({
                   justifyContent: "center",
                   alignItems: "center",
                 }}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Fermer"
+                accessibilityHint="Appuyez pour fermer la fenêtre"
               >
                 <Text
                   style={{ color: "white", fontSize: 18, fontWeight: "bold" }}
+                  importantForAccessibility="no"
                 >
                   ×
                 </Text>
@@ -425,6 +490,10 @@ export const ModalList = ({
                 width: "100%",
                 alignItems: "center",
               }}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Fermer le panier"
+              accessibilityHint="Appuyez pour fermer la fenêtre du panier"
             >
               <Svg height="110" width={screenWidth}>
                 <Path
@@ -456,9 +525,18 @@ export const ModalList = ({
                     alignItems: "center",
                     justifyContent: "center",
                   }}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Abandonner le panier"
+                  accessibilityHint="Appuyez pour vider complètement votre panier"
                 >
-                  <IconAcitivate />
-                  <Text style={{ fontSize: 10, color: "white" }}>Abandon</Text>
+                  <IconAcitivate importantForAccessibility="no" />
+                  <Text
+                    style={{ fontSize: 10, color: "white" }}
+                    importantForAccessibility="no"
+                  >
+                    Abandon
+                  </Text>
                 </TouchableOpacity>
 
                 {/* Bouton Payer */}
@@ -477,19 +555,40 @@ export const ModalList = ({
                     justifyContent: "center",
                   }}
                   disabled={validBasketLength === 0}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    validBasketLength > 0
+                      ? `Payer ${totalAmount.toFixed(2)} euros`
+                      : "Payer - panier vide"
+                  }
+                  accessibilityHint={
+                    validBasketLength > 0
+                      ? "Appuyez pour procéder au paiement"
+                      : "Ajoutez des articles au panier pour pouvoir payer"
+                  }
+                  accessibilityState={{ disabled: validBasketLength === 0 }}
                 >
                   <Text
                     style={{ fontSize: 10, color: "white", fontWeight: "bold" }}
+                    importantForAccessibility="no"
                   >
                     Payer
                   </Text>
                 </TouchableOpacity>
 
                 <View style={{ transform: [{ rotate: "180deg" }] }}>
-                  <IconTopArrow />
+                  <IconTopArrow importantForAccessibility="no" />
                 </View>
-                <Text style={{ fontSize: 10 }}>Votre panier</Text>
-                <Text style={{ fontSize: 25, fontWeight: "bold" }}>
+                <Text style={{ fontSize: 10 }} accessibilityRole="text">
+                  Votre panier
+                </Text>
+                <Text
+                  style={{ fontSize: 25, fontWeight: "bold" }}
+                  accessible={true}
+                  accessibilityRole="text"
+                  accessibilityLabel={`Total: ${totalAmount.toFixed(2)} euros`}
+                >
                   {totalAmount.toFixed(2)}€
                 </Text>
                 <Text>{""}</Text>
@@ -502,10 +601,21 @@ export const ModalList = ({
                     alignItems: "center",
                   }}
                 >
-                  <Text style={{ fontSize: 10, color: "#FF3333" }}>
+                  <Text
+                    style={{ fontSize: 10, color: "#FF3333" }}
+                    accessible={true}
+                    accessibilityRole="text"
+                  >
                     Auto-paiement à la sortie
                   </Text>
-                  <Text style={{ fontSize: 13 }}>
+                  <Text
+                    style={{ fontSize: 13 }}
+                    accessible={true}
+                    accessibilityRole="text"
+                    accessibilityLabel={`${validBasketLength} article${
+                      validBasketLength > 1 ? "s" : ""
+                    } dans le panier`}
+                  >
                     Nombre d'articles: {validBasketLength}
                   </Text>
                 </View>
@@ -528,6 +638,9 @@ export const ModalList = ({
                     justifyContent: "center",
                     alignItems: "center",
                   }}
+                  accessible={true}
+                  accessibilityRole="text"
+                  accessibilityLabel="Votre panier est vide. Scannez des produits pour les ajouter."
                 >
                   <Text style={{ fontSize: 16, color: "#666" }}>
                     Votre panier est vide
@@ -542,7 +655,12 @@ export const ModalList = ({
                   showsVerticalScrollIndicator={false}
                   data={basket}
                   keyExtractor={(item, index) => index.toString()}
-                  renderItem={({ item }) =>
+                  accessible={true}
+                  accessibilityRole="list"
+                  accessibilityLabel={`Liste des articles dans votre panier. ${validBasketLength} article${
+                    validBasketLength > 1 ? "s" : ""
+                  }`}
+                  renderItem={({ item, index }) =>
                     item.product_name === "null" ? (
                       <View
                         style={{
@@ -557,6 +675,9 @@ export const ModalList = ({
                           alignItems: "center",
                           borderRadius: 100,
                         }}
+                        accessible={true}
+                        accessibilityRole="text"
+                        accessibilityLabel={`Message: ${item?.message}`}
                       >
                         <View
                           style={{
@@ -571,6 +692,7 @@ export const ModalList = ({
                               color: "white",
                               fontWeight: "bold",
                             }}
+                            importantForAccessibility="no"
                           >
                             {item?.message}
                           </Text>
@@ -590,21 +712,19 @@ export const ModalList = ({
                           alignItems: "center",
                           borderRadius: 100,
                         }}
+                        accessible={true}
+                        accessibilityRole="listitem"
+                        accessibilityLabel={`Article ${index + 1}. ${
+                          item?.product_name || "Produit inconnu"
+                        }${
+                          item?.quantity && item?.quantity > 1
+                            ? `. Quantité: ${item.quantity}`
+                            : ""
+                        }. Prix: ${(
+                          (item.price || 0) * (item.quantity || 1)
+                        ).toFixed(2)} euros`}
                       >
                         <View>
-                          {/* <Image
-                            style={{
-                              width: 40,
-                              height: 40,
-                              borderRadius: 25,
-                              backgroundColor: "white",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              marginRight: 10,
-                            }}
-                            source={{ uri: item?.image_link }}
-                            onError={() => setError(true)}
-                          /> */}
                           <FallbackImage
                             style={{
                               width: 40,
@@ -616,6 +736,11 @@ export const ModalList = ({
                               marginRight: 10,
                             }}
                             uri={item?.image_link}
+                            accessible={true}
+                            accessibilityRole="image"
+                            accessibilityLabel={`Image du produit ${
+                              item?.product_name || "Produit inconnu"
+                            }`}
                           />
                         </View>
                         <View
@@ -634,6 +759,7 @@ export const ModalList = ({
                               color: "white",
                               fontWeight: "bold",
                             }}
+                            importantForAccessibility="no"
                           >
                             {item?.product_name || "Produit inconnu"}
                           </Text>
@@ -644,12 +770,26 @@ export const ModalList = ({
                             }}
                             onPress={() => fetchNutritionInfo(item)}
                             disabled={loading}
+                            accessible={true}
+                            accessibilityRole="button"
+                            accessibilityLabel={
+                              loading && selectedProduct === item
+                                ? "Chargement des informations nutritionnelles"
+                                : `Voir les informations nutritionnelles de ${
+                                    item?.product_name || "ce produit"
+                                  }`
+                            }
+                            accessibilityHint="Appuyez pour afficher les détails nutritionnels"
+                            accessibilityState={{
+                              disabled: loading && selectedProduct === item,
+                            }}
                           >
                             <Text
                               style={{
                                 color: "white",
                                 textDecorationLine: "underline",
                               }}
+                              importantForAccessibility="no"
                             >
                               {loading && selectedProduct === item
                                 ? "Chargement..."
@@ -675,9 +815,9 @@ export const ModalList = ({
                                   paddingHorizontal: 8,
                                   marginRight: 5,
                                   fontSize: 12,
-
                                   fontWeight: "bold",
                                 }}
+                                importantForAccessibility="no"
                               >
                                 x{item.quantity}
                               </Text>
@@ -689,6 +829,7 @@ export const ModalList = ({
                                 paddingHorizontal: 10,
                                 fontWeight: "bold",
                               }}
+                              importantForAccessibility="no"
                             >
                               {(
                                 (item.price || 0) * (item.quantity || 1)
@@ -701,7 +842,16 @@ export const ModalList = ({
                     )
                   }
                   ListFooterComponent={
-                    <View style={{ padding: 20, alignItems: "center" }}>
+                    <View
+                      style={{ padding: 20, alignItems: "center" }}
+                      accessible={true}
+                      accessibilityRole="text"
+                      accessibilityLabel={`Fin de la liste. Total du panier: ${totalAmount.toFixed(
+                        2
+                      )} euros pour ${validBasketLength} article${
+                        validBasketLength > 1 ? "s" : ""
+                      }`}
+                    >
                       <Text style={{ color: "gray" }}>
                         Vous êtes arrivé en bas 🛒
                       </Text>
@@ -720,6 +870,7 @@ export const ModalList = ({
                             fontWeight: "bold",
                             fontSize: 16,
                           }}
+                          importantForAccessibility="no"
                         >
                           Total: {totalAmount.toFixed(2)}€
                         </Text>
@@ -729,6 +880,7 @@ export const ModalList = ({
                             color: "#666",
                             marginTop: 5,
                           }}
+                          importantForAccessibility="no"
                         >
                           {validBasketLength} article
                           {validBasketLength > 1 ? "s" : ""}
@@ -746,7 +898,13 @@ export const ModalList = ({
   );
 };
 
-const FallbackImage = ({ uri, style }) => {
+const FallbackImage = ({
+  uri,
+  style,
+  accessible,
+  accessibilityRole,
+  accessibilityLabel,
+}) => {
   const [failed, setFailed] = useState(false);
 
   return (
@@ -760,6 +918,9 @@ const FallbackImage = ({ uri, style }) => {
           : { uri }
       }
       onError={() => setFailed(true)}
+      accessible={accessible}
+      accessibilityRole={accessibilityRole}
+      accessibilityLabel={accessibilityLabel}
     />
   );
 };

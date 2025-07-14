@@ -13,13 +13,8 @@ import { BackGround } from "../component/background";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   IconTickets,
-  //   IconArrowLeft,
-  //   IconCalendar,
   IconCard,
   IconTopArrow,
-  //   IconCheck,
-  //   IconClock,
-  //   IconCancel,
 } from "../icon";
 import { useNavigation } from "@react-navigation/native";
 import {
@@ -117,6 +112,9 @@ const TicketsScreen = () => {
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={{ marginRight: 15 }}
+          accessible={true}
+          accessibilityLabel="Retour à l'écran précédent"
+          accessibilityRole="button"
         >
           <IconTopArrow />
         </TouchableOpacity>
@@ -127,6 +125,8 @@ const TicketsScreen = () => {
             flex: 1,
             textAlign: "center",
           }}
+          accessible={true}
+          accessibilityRole="header"
         >
           Mes Tickets
         </Text>
@@ -134,13 +134,15 @@ const TicketsScreen = () => {
       </View>
 
       {/* Filtres */}
-
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-around",
         }}
+        accessible={true}
+        accessibilityLabel="Filtres des tickets"
+        accessibilityRole="tabbar"
       >
         {[
           { key: "completed", label: "Terminés" },
@@ -160,12 +162,17 @@ const TicketsScreen = () => {
               shadowRadius: 2,
               shadowOffset: { height: 1, width: 0 },
             }}
+            accessible={true}
+            accessibilityLabel={`Filtrer par tickets ${filterOption.label.toLowerCase()}`}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: filter === filterOption.key }}
           >
             <Text
               style={{
                 color: filter === filterOption.key ? "white" : "black",
                 fontWeight: filter === filterOption.key ? "bold" : "normal",
               }}
+              accessible={false}
             >
               {filterOption.label}
             </Text>
@@ -177,16 +184,28 @@ const TicketsScreen = () => {
         <View
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
         >
-          <Text>Chargement de vos tickets...</Text>
+          <Text 
+            accessible={true}
+            accessibilityLabel="Chargement de vos tickets en cours"
+          >
+            Chargement de vos tickets...
+          </Text>
         </View>
       ) : (
         <FlatList
           data={getFilteredTickets()}
           keyExtractor={(item) => item.id}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh}
+              accessible={true}
+              accessibilityLabel="Actualiser la liste des tickets"
+            />
           }
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
+          accessible={true}
+          accessibilityLabel={`Liste des tickets ${getStatusText(filter).toLowerCase()}`}
           ListEmptyComponent={
             <View
               style={{
@@ -197,7 +216,15 @@ const TicketsScreen = () => {
               }}
             >
               <IconTickets />
-              <Text style={{ marginTop: 20, fontSize: 16, color: "#666" }}>
+              <Text 
+                style={{ marginTop: 20, fontSize: 16, color: "#666" }}
+                accessible={true}
+                accessibilityLabel={
+                  filter === "all"
+                    ? "Aucun ticket trouvé"
+                    : `Aucun ticket ${getStatusText(filter).toLowerCase()}`
+                }
+              >
                 {filter === "all"
                   ? "Aucun ticket trouvé"
                   : `Aucun ticket ${getStatusText(filter).toLowerCase()}`}
@@ -219,6 +246,10 @@ const TicketsScreen = () => {
                 shadowRadius: 5,
                 shadowOffset: { height: 2, width: 0 },
               }}
+              accessible={true}
+              accessibilityLabel={`Ticket numéro ${item.id.substring(0, 8)}, ${item.storeName || "Magasin inconnu"}, ${getStatusText(item.status)}, montant ${item.totalAmount} euros, créé le ${formatDate(item.createdAt)}`}
+              accessibilityRole="button"
+              accessibilityHint="Appuyez pour voir les détails du ticket"
             >
               <View
                 style={{
@@ -226,28 +257,34 @@ const TicketsScreen = () => {
                   justifyContent: "space-between",
                   alignItems: "center",
                 }}
+                accessible={false}
               >
-                <View style={{ flex: 1 }}>
+                <View style={{ flex: 1 }} accessible={false}>
                   <Text
                     style={{
                       fontSize: 16,
                       fontWeight: "bold",
                       marginBottom: 5,
                     }}
+                    accessible={false}
                   >
                     Ticket #{item.id.substring(0, 8)}
                   </Text>
                   <Text
                     style={{ fontSize: 14, color: "#666", marginBottom: 5 }}
+                    accessible={false}
                   >
                     {item.storeName || "Magasin inconnu"}
                   </Text>
-                  <Text style={{ fontSize: 12, color: "#999" }}>
+                  <Text 
+                    style={{ fontSize: 12, color: "#999" }}
+                    accessible={false}
+                  >
                     {formatDate(item.createdAt)}
                   </Text>
                 </View>
 
-                <View style={{ alignItems: "center" }}>
+                <View style={{ alignItems: "center" }} accessible={false}>
                   <View
                     style={{
                       backgroundColor: getStatusColor(item.status),
@@ -256,6 +293,7 @@ const TicketsScreen = () => {
                       borderRadius: 15,
                       marginBottom: 5,
                     }}
+                    accessible={false}
                   >
                     <Text
                       style={{
@@ -263,11 +301,15 @@ const TicketsScreen = () => {
                         fontSize: 12,
                         fontWeight: "bold",
                       }}
+                      accessible={false}
                     >
                       {getStatusText(item.status)}
                     </Text>
                   </View>
-                  <Text style={{ fontSize: 14, fontWeight: "bold" }}>
+                  <Text 
+                    style={{ fontSize: 14, fontWeight: "bold" }}
+                    accessible={false}
+                  >
                     {item.totalAmount + "€"}
                   </Text>
                 </View>
@@ -282,6 +324,8 @@ const TicketsScreen = () => {
         visible={isDetailModalVisible}
         animationType="slide"
         transparent={true}
+        accessible={true}
+        accessibilityViewIsModal={true}
       >
         <View
           style={{
@@ -290,6 +334,8 @@ const TicketsScreen = () => {
             justifyContent: "center",
             alignItems: "center",
           }}
+          accessible={true}
+          accessibilityLabel="Détail du ticket"
         >
           <View
             style={{
@@ -299,6 +345,7 @@ const TicketsScreen = () => {
               borderRadius: 15,
               padding: 20,
             }}
+            accessible={false}
           >
             {selectedTicket && (
               <>
@@ -309,20 +356,35 @@ const TicketsScreen = () => {
                     alignItems: "center",
                     marginBottom: 20,
                   }}
+                  accessible={false}
                 >
-                  <Text style={{ fontSize: 18, fontWeight: "bold" }}>
+                  <Text 
+                    style={{ fontSize: 18, fontWeight: "bold" }}
+                    accessible={true}
+                    accessibilityRole="header"
+                  >
                     Détail du Ticket
                   </Text>
                   <TouchableOpacity
                     onPress={() => setIsDetailModalVisible(false)}
+                    accessible={true}
+                    accessibilityLabel="Fermer les détails du ticket"
+                    accessibilityRole="button"
                   >
-                    <Text style={{ fontSize: 16, color: "#007bff" }}>
+                    <Text 
+                      style={{ fontSize: 16, color: "#007bff" }}
+                      accessible={false}
+                    >
                       Fermer
                     </Text>
                   </TouchableOpacity>
                 </View>
 
-                <ScrollView showsVerticalScrollIndicator={false}>
+                <ScrollView 
+                  showsVerticalScrollIndicator={false}
+                  accessible={true}
+                  accessibilityLabel="Détails du ticket"
+                >
                   <TicketDetailItem
                     icon={<IconTickets />}
                     label="Numéro"
@@ -358,13 +420,18 @@ const TicketsScreen = () => {
                   )}
 
                   {selectedTicket.items && selectedTicket.items.length > 0 && (
-                    <View style={{ marginTop: 20 }}>
+                    <View 
+                      style={{ marginTop: 20 }}
+                      accessible={true}
+                      accessibilityLabel={`Liste des articles, ${selectedTicket.items.length} article${selectedTicket.items.length > 1 ? 's' : ''}`}
+                    >
                       <Text
                         style={{
                           fontSize: 16,
                           fontWeight: "bold",
                           marginBottom: 10,
                         }}
+                        accessible={false}
                       >
                         Articles ({selectedTicket.items.length})
                       </Text>
@@ -379,12 +446,20 @@ const TicketsScreen = () => {
                               index < selectedTicket.items.length - 1 ? 1 : 0,
                             borderBottomColor: "#eee",
                           }}
+                          accessible={true}
+                          accessibilityLabel={`${item.name || "Article"}, quantité ${item.quantity || 1}, prix ${item.price ? `${item.price} euros` : "non disponible"}`}
                         >
-                          <Text style={{ flex: 1 }}>
+                          <Text 
+                            style={{ flex: 1 }}
+                            accessible={false}
+                          >
                             {item.name || "Article"}
                           </Text>
-                          <Text>x{item.quantity || 1}</Text>
-                          <Text style={{ marginLeft: 10, fontWeight: "bold" }}>
+                          <Text accessible={false}>x{item.quantity || 1}</Text>
+                          <Text 
+                            style={{ marginLeft: 10, fontWeight: "bold" }}
+                            accessible={false}
+                          >
                             {item.price ? `${item.price}€` : "N/A"}
                           </Text>
                         </View>
@@ -413,18 +488,28 @@ const TicketDetailItem = ({ icon, label, value, valueColor = "black" }) => {
         borderBottomWidth: 1,
         borderBottomColor: "#f0f0f0",
       }}
+      accessible={true}
+      accessibilityLabel={`${label}: ${value}`}
     >
       {icon && (
         <>
-          {icon}
+          <View accessible={false}>
+            {icon}
+          </View>
           <View style={{ width: 15 }} />
         </>
       )}
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 12, color: "#666", marginBottom: 2 }}>
+      <View style={{ flex: 1 }} accessible={false}>
+        <Text 
+          style={{ fontSize: 12, color: "#666", marginBottom: 2 }}
+          accessible={false}
+        >
           {label}
         </Text>
-        <Text style={{ fontSize: 16, fontWeight: "500", color: valueColor }}>
+        <Text 
+          style={{ fontSize: 16, fontWeight: "500", color: valueColor }}
+          accessible={false}
+        >
           {value}
         </Text>
       </View>

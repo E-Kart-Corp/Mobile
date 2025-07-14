@@ -61,7 +61,7 @@ const SignUp = () => {
 
   return (
     <View style={{ flex: 1 }}>
-      <BackGround middle={false}/>
+      <BackGround middle={false} />
       <MyHeader />
       <ScrollView>
         <View style={{ height: insets.top }} />
@@ -79,6 +79,7 @@ const SignUp = () => {
               left: 0,
             }}
             source={require("./../../assets/logo_long.png")}
+            accessible={false}
           />
         </View>
         <TextInput
@@ -102,6 +103,9 @@ const SignUp = () => {
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
+          accessible={true}
+          accessibilityLabel="Champ email"
+          accessibilityHint="Entrez votre adresse email"
         />
         <TextInput
           style={{
@@ -124,6 +128,9 @@ const SignUp = () => {
           onChangeText={setPassword}
           secureTextEntry
           autoCapitalize="none"
+          accessible={true}
+          accessibilityLabel="Champ mot de passe"
+          accessibilityHint="Entrez votre mot de passe"
         />
 
         <TextInput
@@ -147,12 +154,19 @@ const SignUp = () => {
           onChangeText={setPassword}
           secureTextEntry
           autoCapitalize="none"
+          accessible={true}
+          accessibilityLabel="Champ confirmation mot de passe"
+          accessibilityHint="Répétez votre mot de passe"
         />
         <View style={{ width: "100%", alignItems: "center" }}>
           <TouchableOpacity
             onPress={() => {
               handleSignUp();
             }}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="S'inscrire"
+            accessibilityHint="Appuyez pour créer votre compte"
             style={{
               padding: 12,
               marginTop: 20,

@@ -2,20 +2,14 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   TextInput,
-  Button,
   Alert,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
   Image,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import {
-  signInWithEmailAndPassword,
-  sendPasswordResetEmail,
-} from "firebase/auth";
+import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../../config";
 import { BackGround } from "../../component/background";
 import MyHeader from "../../component/my_header";
@@ -24,13 +18,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 const LostPassword = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState("briceuh29@gmail.com");
-
   const insets = useSafeAreaInsets();
 
   const handleLostPassword = async () => {
     try {
       await sendPasswordResetEmail(auth, email);
-    } catch (error) {
+      Alert.alert("Succès", "Un email de réinitialisation a été envoyé.");
+    } catch (error: any) {
       Alert.alert("Erreur", error.message);
     }
   };
@@ -39,8 +33,10 @@ const LostPassword = () => {
     <View style={{ flex: 1 }}>
       <BackGround middle={false} />
       <MyHeader />
+
       <ScrollView>
         <View style={{ height: insets.top }} />
+
         <View
           style={{
             width: "100%",
@@ -50,13 +46,12 @@ const LostPassword = () => {
           }}
         >
           <Image
-            style={{
-              top: 0,
-              left: 0,
-            }}
+            style={{ top: 0, left: 0 }}
             source={require("./../../assets/logo_long.png")}
+            accessible={false}
           />
         </View>
+
         <TextInput
           style={{
             width: "90%",
@@ -68,22 +63,21 @@ const LostPassword = () => {
             borderRadius: 18,
             shadowOpacity: 0.5,
             shadowRadius: 3,
-            shadowOffset: {
-              height: 0,
-              width: 0,
-            },
+            shadowOffset: { height: 0, width: 0 },
           }}
           placeholder="Email"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
+          accessible={true}
+          accessibilityLabel="Champ de saisie email"
+          accessibilityHint="Entrez votre adresse email pour réinitialiser votre mot de passe"
         />
+
         <View style={{ width: "100%", alignItems: "center" }}>
           <TouchableOpacity
-            onPress={() => {
-              handleLostPassword();
-            }}
+            onPress={handleLostPassword}
             style={{
               padding: 12,
               marginTop: 20,
@@ -96,11 +90,12 @@ const LostPassword = () => {
               shadowOpacity: 0.5,
               shadowRadius: 3,
               shadowColor: "rgba(0,122,84, 1)",
-              shadowOffset: {
-                height: 0,
-                width: 0,
-              },
+              shadowOffset: { height: 0, width: 0 },
             }}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Envoyer un code de réinitialisation"
+            accessibilityHint="Appuyez pour recevoir un email de réinitialisation du mot de passe"
           >
             <Text style={{ color: "white" }}>Envoyer un code</Text>
           </TouchableOpacity>
