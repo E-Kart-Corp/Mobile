@@ -15,15 +15,21 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSPhotoLibraryAddUsageDescription": "Cette application a besoin d'enregistrer des images dans votre galerie."
-      }
+        "NSPhotoLibraryAddUsageDescription": "Cette application a besoin d'enregistrer des images dans votre galerie.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.ekart.AppMobile"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.ekart.AppMobile"
+      "package": "com.ekart.AppMobile",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -47,6 +53,7 @@
         }
       ],
       "expo-video"
-    ]
+    ],
+    "owner": "ekart"
   }
 }

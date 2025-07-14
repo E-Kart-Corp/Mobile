@@ -40,7 +40,8 @@
     "expo-haptics": "~14.1.4",
     "expo-av": "~15.1.6",
     "expo-audio": "~0.4.6",
-    "expo-video": "~2.2.1"
+    "expo-video": "~2.2.1",
+    "expo-dev-client": "~5.2.4"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

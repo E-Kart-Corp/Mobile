@@ -35,9 +35,9 @@ import { ButtonOpenModal } from "../component/button_open_modal";
 import { LoginScreenNavigationProp } from "./authStack/LoginScreen";
 import { useAuth } from "../authContext";
 import { triggerFeedback } from "../component/trigger_feedback";
-import * as Haptics from 'expo-haptics';
+import * as Haptics from "expo-haptics";
 
-const audioSource = require("/Users/bricehuet/delivery/eip/Mobile/assets/sounds/feedback.mp3");
+const audioSource = require("../assets/sounds/feedback.mp3");
 
 const HomeScreen = () => {
   const player = useAudioPlayer(audioSource);
@@ -55,7 +55,7 @@ const HomeScreen = () => {
   // user.settings.vibrations # son vibrations
 
   const [stores, setStores] = useState([]);
-  const [selectedStoreId, setSelectedStoreId] = useState("store_eip");
+  const [selectedStoreId, setSelectedStoreId] = useState("");
 
   React.useEffect(() => {
     (async () => {
@@ -71,7 +71,7 @@ const HomeScreen = () => {
   const takePicture = async () => {
     if (cameraRef) {
       const photo = await cameraRef.takePictureAsync({
-        quality: 0.1
+        quality: 0.1,
       });
       if (user.settings.sounds) {
         player.seekTo(0);
@@ -410,7 +410,10 @@ const HomeScreen = () => {
 
   const insets = useSafeAreaInsets();
 
-  if (!isSimulator && !selectedStoreId)
+  const [errorMessage, setErrorMessage] = useState("");
+  const [hasScanned, setHasScanned] = useState(false);
+
+  if (!isSimulator && !selectedStoreId) {
     return (
       <CameraView
         style={{
@@ -423,9 +426,28 @@ const HomeScreen = () => {
         barcodeScannerSettings={{
           barcodeTypes: ["qr"],
         }}
-        onBarcodeScanned={({ data }) => {
-          console.log(data);
-          setSelectedStoreId(data);
+        onBarcodeScanned={async ({ data }) => {
+          if (hasScanned) return;
+          setHasScanned(true);
+
+          try {
+            const scannedId = data.trim();
+            const storeRef = doc(db, "commerce", scannedId);
+            const storeSnap = await getDoc(storeRef);
+
+            if (storeSnap.exists()) {
+              setSelectedStoreId(scannedId);
+              setErrorMessage("");
+              setTimeout(() => setHasScanned(false), 2000);
+            } else {
+              setErrorMessage("Ce magasin n'existe pas.");
+              setTimeout(() => setHasScanned(false), 2000);
+            }
+          } catch (err) {
+            console.error("Erreur lors de la vérification du magasin :", err);
+            setErrorMessage("Une erreur est survenue.");
+            setTimeout(() => setHasScanned(false), 2000);
+          }
         }}
       >
         <View
@@ -438,6 +460,7 @@ const HomeScreen = () => {
             alignItems: "center",
           }}
         ></View>
+
         <View
           style={{
             marginTop: 10,
@@ -450,9 +473,13 @@ const HomeScreen = () => {
           <Text style={{ fontWeight: "bold" }}>
             Veuillez scanner le QrCode du commerce
           </Text>
+          {errorMessage ? (
+            <Text style={{ color: "red", marginTop: 5 }}>{errorMessage}</Text>
+          ) : null}
         </View>
       </CameraView>
     );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: "lightgray" }}>
