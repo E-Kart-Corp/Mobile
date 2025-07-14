@@ -39,6 +39,8 @@ import { useAuth } from "../authContext";
 import { triggerFeedback } from "../component/trigger_feedback";
 import * as Haptics from "expo-haptics";
 
+import ReactNativeHapticFeedback from "react-native-haptic-feedback";
+
 const audioSource = require("../assets/sounds/feedback.mp3");
 
 const HomeScreen = () => {
@@ -53,6 +55,21 @@ const HomeScreen = () => {
   const [isSimulator, setIsSimulator] = useState(false);
   const [isScreenReaderEnabled, setIsScreenReaderEnabled] = useState(false);
   const navigation = useNavigation<LoginScreenNavigationProp>();
+
+  const triggerHapticSuccess = () => {
+    if (user.settings.vibrations)
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  };
+
+  const triggerHapticWarning = () => {
+    if (user.settings.vibrations)
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+  };
+
+  const triggerHapticError = () => {
+    if (user.settings.vibrations)
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+  };
 
   // user.settings.sounds # son boolean
   // user.settings.vibrations # son vibrations
@@ -101,7 +118,7 @@ const HomeScreen = () => {
         quality: 0.1,
       });
 
-      if (user.settings.vibrations) Vibration.vibrate();
+      triggerHapticSuccess();
       if (user.settings.sounds) {
         player.seekTo(0);
         player.play();
@@ -157,6 +174,7 @@ const HomeScreen = () => {
         }
       },
       (err) => {
+        triggerHapticError();
         console.log("Error listening to document:", err);
       }
     );
@@ -217,6 +235,7 @@ const HomeScreen = () => {
 
               setBasket([]);
               setModalVisible(false);
+              triggerHapticSuccess();
 
               announceToScreenReader("Panier abandonné avec succès");
 
@@ -227,6 +246,7 @@ const HomeScreen = () => {
             } catch (error) {
               console.log("Erreur lors de l'abandon du panier :", error);
               announceToScreenReader("Erreur lors de l'abandon du panier");
+              triggerHapticError();
               Alert.alert("Erreur", "Impossible d'abandonner le panier");
             }
           },
@@ -259,6 +279,8 @@ const HomeScreen = () => {
           onPress: async () => {
             try {
               announceToScreenReader("Paiement en cours, veuillez patienter");
+
+              triggerHapticSuccess();
 
               // Simuler un délai de paiement
               Alert.alert("Paiement en cours...", "Veuillez patienter");
@@ -320,6 +342,8 @@ const HomeScreen = () => {
             } catch (error) {
               console.log("Erreur lors du paiement :", error);
               announceToScreenReader("Erreur lors du paiement");
+              triggerHapticError();
+
               Alert.alert(
                 "Erreur de paiement",
                 "Le paiement a échoué. Veuillez réessayer."
@@ -392,9 +416,10 @@ const HomeScreen = () => {
           await updateDoc(storeRef, {
             products: updatedProducts,
           });
-
+          triggerHapticSuccess();
           console.log("Produits mis à jour après vente.");
         } else {
+          triggerHapticWarning();
           console.warn(
             "Le store n'existe pas pour mettre à jour les produits."
           );
@@ -404,6 +429,7 @@ const HomeScreen = () => {
       return docRef.id;
     } catch (error) {
       console.error("Erreur lors de la création du ticket:", error);
+      triggerHapticError();
       throw error;
     }
   };
@@ -441,6 +467,8 @@ const HomeScreen = () => {
       return;
     }
 
+    triggerHapticSuccess();
+
     announceToScreenReader("Envoi de l'image pour analyse");
 
     const fileType = isSimulator
@@ -471,11 +499,13 @@ const HomeScreen = () => {
 
       const result = await response.json();
       console.log(result);
+      triggerHapticSuccess();
 
       announceToScreenReader("Image analysée avec succès");
     } catch (error) {
       console.error("Erreur lors de l'envoi de l'image :", error);
       announceToScreenReader("Erreur lors de l'envoi de l'image");
+      triggerHapticError();
       Alert.alert("Erreur", "L'envoi de l'image a échoué");
     }
   };
@@ -507,6 +537,7 @@ const HomeScreen = () => {
           onBarcodeScanned={async ({ data }) => {
             if (hasScanned) return;
             setHasScanned(true);
+            triggerHapticSuccess();
 
             announceToScreenReader("QR Code détecté, vérification en cours");
 
@@ -530,6 +561,7 @@ const HomeScreen = () => {
             } catch (err) {
               console.error("Erreur lors de la vérification du magasin :", err);
               setErrorMessage("Une erreur est survenue.");
+              triggerHapticError();
               announceToScreenReader(
                 "Une erreur est survenue lors de la vérification"
               );
