@@ -10,6 +10,7 @@ import {
   FlatList,
   Alert,
   Dimensions,
+  Vibration,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { onAuthStateChanged } from "firebase/auth";
@@ -73,6 +74,7 @@ const HomeScreen = () => {
       const photo = await cameraRef.takePictureAsync({
         quality: 0.1,
       });
+      if (user.settings.vibrations) Vibration.vibrate();
       if (user.settings.sounds) {
         player.seekTo(0);
         player.play();
