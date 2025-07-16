@@ -176,7 +176,7 @@ const LoginScreen = () => {
         </View>
       </ScrollView>
 
-      <TouchableOpacity
+      {/* <TouchableOpacity
         onPress={() => navigation.navigate("CheckForm")}
         accessible={true}
         accessibilityRole="button"
@@ -193,7 +193,7 @@ const LoginScreen = () => {
         >
           Version Test Forme
         </Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       <TouchableOpacity
         onPress={() => navigation.navigate("SignUp")}
