@@ -189,6 +189,38 @@ const HomeScreen = () => {
 
   const realBasketLength = basket.length;
 
+  const removeItemFromBasket = async (indexToRemove) => {
+    if (!user?.uid) return;
+
+    try {
+      // Créer une copie du panier sans l'élément à supprimer
+      const updatedBasket = basket.filter(
+        (_, index) => index !== indexToRemove
+      );
+
+      // Mettre à jour Firebase
+      const docRef = doc(db, "client", user.uid);
+      await updateDoc(docRef, {
+        current_kart: {
+          idStore: selectedStoreId,
+          kart: updatedBasket,
+        },
+      });
+
+      // Mettre à jour l'état local
+      setBasket(updatedBasket);
+
+      // Retour haptique et annonce vocale
+      triggerHapticSuccess();
+      announceToScreenReader("Produit supprimé du panier");
+    } catch (error) {
+      console.log("Erreur lors de la suppression du produit :", error);
+      triggerHapticError();
+      announceToScreenReader("Erreur lors de la suppression du produit");
+      Alert.alert("Erreur", "Impossible de supprimer le produit du panier");
+    }
+  };
+
   const abandonBasket = async () => {
     if (!user?.uid || realBasketLength === 0) return;
 
@@ -743,10 +775,8 @@ const HomeScreen = () => {
                       bottom: 120,
                       justifyContent: "flex-end",
                       alignItems: "center",
-                      // marginBottom: 20,
                     }}
                   >
-                    {/* <Button title="Prendre une photo" onPress={takePicture} /> */}
                     <TouchableOpacity
                       onPress={takePicture}
                       accessible={true}
@@ -859,6 +889,7 @@ const HomeScreen = () => {
         processPayment={processPayment}
         modalVisible={modalVisible}
         setModalVisible={setModalVisible}
+        removeItemFromBasket={removeItemFromBasket}
         // Assurez-vous que ce composant a aussi les bonnes propriétés d'accessibilité
       />
     </View>

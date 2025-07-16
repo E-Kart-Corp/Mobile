@@ -22,6 +22,7 @@ export const ModalList = ({
   deleteBasket,
   basket,
   processPayment,
+  removeItemFromBasket,
 }) => {
   const [showNutrition, setShowNutrition] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -92,6 +93,21 @@ export const ModalList = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const confirmRemoveItem = (index, productName) => {
+    Alert.alert(
+      "Supprimer le produit",
+      `Êtes-vous sûr de vouloir supprimer "${productName}" de votre panier ?`,
+      [
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "Supprimer",
+          style: "destructive",
+          onPress: () => removeItemFromBasket(index),
+        },
+      ]
+    );
   };
 
   // Composant pour afficher les informations nutritionnelles
@@ -754,7 +770,7 @@ export const ModalList = ({
                             numberOfLines={1}
                             style={{
                               position: "absolute",
-                              width: "80%",
+                              width: "70%", // Réduit pour faire place au bouton supprimer
                               top: 0,
                               color: "white",
                               fontWeight: "bold",
@@ -763,6 +779,43 @@ export const ModalList = ({
                           >
                             {item?.product_name || "Produit inconnu"}
                           </Text>
+
+                          {/* Bouton de suppression */}
+                          <TouchableOpacity
+                            style={{
+                              position: "absolute",
+                              top: 0,
+                              right: 80, // Positionné à droite du nom
+                              backgroundColor: "rgba(255,255,255,0.2)",
+                              borderRadius: 10,
+                              paddingHorizontal: 5,
+                              paddingVertical: 2,
+                            }}
+                            onPress={() =>
+                              confirmRemoveItem(
+                                index,
+                                item?.product_name || "Produit inconnu"
+                              )
+                            }
+                            accessible={true}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Supprimer ${
+                              item?.product_name || "ce produit"
+                            } du panier`}
+                            accessibilityHint="Appuyez pour supprimer ce produit de votre panier"
+                          >
+                            <Text
+                              style={{
+                                color: "white",
+                                fontSize: 12,
+                                fontWeight: "bold",
+                              }}
+                              importantForAccessibility="no"
+                            >
+                              ×
+                            </Text>
+                          </TouchableOpacity>
+
                           <TouchableOpacity
                             style={{
                               position: "absolute",

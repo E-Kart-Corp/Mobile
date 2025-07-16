@@ -203,9 +203,9 @@ const ProfileUser = () => {
               });
 
               setUserInfo({
-                name: "Nom non renseigné",
+                name: "",
                 email: user.email || "Email non renseigné",
-                phone: "Téléphone non renseigné",
+                phone: "",
                 card: "Carte non renseignée",
                 profileImage:
                   "https://meta-q.cdn.bubble.io/f1717102933566x753149416257430700/Random%20User%20Generator%20.webp",
@@ -320,7 +320,7 @@ const ProfileUser = () => {
             paddingHorizontal: 20,
             paddingVertical: 10,
             borderRadius: 5,
-            backgroundColor: isColorBlindMode ? theme.danger : 'transparent',
+            backgroundColor: isColorBlindMode ? theme.danger : 'lightblue',
             borderColor: theme.danger,
             borderWidth: 2,
           }
