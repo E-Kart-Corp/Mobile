@@ -47,7 +47,7 @@ const HomeScreen = () => {
   const player = useAudioPlayer(audioSource);
 
   const [modalVisible, setModalVisible] = useState(false);
-  const { user } = useAuth();
+  const { user,  } = useAuth();
   const [image, setImage] = useState(null);
   const [basket, setBasket] = useState([]);
   const [hasPermission, setHasPermission] = useState(null);
@@ -518,8 +518,9 @@ const HomeScreen = () => {
 
     try {
       const response = await fetch(
+        `http://http://5.196.147.213:3000/client/checkProduct/${selectedStoreId}/${user?.uid}`,
         // `http://51.210.212.247:3000/client/checkProduct/${selectedStoreId}/${user?.uid}`,
-        `http://5.196.147.213:3000/client/checkProduct/${selectedStoreId}/${user?.uid}`,
+        // `http://82.25.119.208:3000/client/checkProduct/${selectedStoreId}/${user?.uid}`,
         {
           method: "POST",
           body: formData,
