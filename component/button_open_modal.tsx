@@ -72,12 +72,12 @@ export const ButtonOpenModal = ({ setModalVisible, basket }) => {
           {totalAmount.toFixed(2)}€
         </Text>
         
-        <Text 
+        {/* <Text 
           style={{ fontSize: 10, color: "#FF3333", marginBottom: 10 }}
           accessible={false}
         >
           Auto-paiement à la sortie
-        </Text>
+        </Text> */}
       </View>
     </TouchableOpacity>
   );
