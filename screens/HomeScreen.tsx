@@ -75,7 +75,7 @@ const HomeScreen = () => {
   // user.settings.vibrations # son vibrations
 
   const [stores, setStores] = useState([]);
-  const [selectedStoreId, setSelectedStoreId] = useState("store_eip");
+  const [selectedStoreId, setSelectedStoreId] = useState("carrefour_sartrouville");
 
   // Vérifier si VoiceOver est activé
   useEffect(() => {
@@ -519,7 +519,7 @@ const HomeScreen = () => {
     try {
       const response = await fetch(
         // `http://51.210.212.247:3000/client/checkProduct/${selectedStoreId}/${user?.uid}`,
-        `http://82.25.119.208:3000/client/checkProduct/${selectedStoreId}/${user?.uid}`,
+        `http://5.196.147.213:3000/client/checkProduct/${selectedStoreId}/${user?.uid}`,
         {
           method: "POST",
           body: formData,
