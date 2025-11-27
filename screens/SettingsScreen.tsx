@@ -17,6 +17,30 @@ import { auth, db } from "../config";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useAuth } from "../authContext";
 
+const getColorBlindTheme = (isColorBlindMode) => {
+  if (isColorBlindMode) {
+    return {
+      text: '#000000',
+      textSecondary: '#4A4A4A',
+      background: '#F8F9FA',
+      cardBackground: '#FFFFFF',
+      border: '#000000',
+      toggleActive: '#FFD700',
+      toggleInactive: '#CCCCCC',
+    };
+  } else {
+    return {
+      text: '#333333',
+      textSecondary: '#666666',
+      background: '#ffffff',
+      cardBackground: '#ffffff',
+      border: '#f0f0f0',
+      toggleActive: '#007bff',
+      toggleInactive: '#ccc',
+    };
+  }
+};
+
 const SettingsScreen = () => {
   const insets = useSafeAreaInsets();
 
@@ -55,13 +79,15 @@ const SettingsContent = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { user, refreshUserData } = useAuth();
   const [loading, setLoading] = useState(true);
+  const isColorBlind = user?.settings?.colorBlindMode || false;
+  const theme = getColorBlindTheme(isColorBlind);
 
   // États pour les paramètres
   const [settings, setSettings] = useState({
     notifications: true,
     sounds: true,
     vibrations: true,
-    colorBlindMode: false,
+    colorBlindMode: isColorBlind,
   });
 
   // Récupérer les paramètres depuis Firebase
@@ -93,20 +119,16 @@ const SettingsContent = () => {
   // Sauvegarder les paramètres dans Firebase
   const updateSettings = async (newSettings) => {
     if (!user?.uid) return;
-
     try {
       const docRef = doc(db, "client", user.uid);
       await updateDoc(docRef, {
         settings: newSettings,
         updatedAt: new Date().toISOString(),
       });
-
       setSettings(newSettings);
-      Alert.alert("Succès", "Paramètres mis à jour");
       refreshUserData();
     } catch (error) {
-      console.log("Erreur lors de la mise à jour des paramètres :", error);
-      Alert.alert("Erreur", "Impossible de sauvegarder les paramètres");
+      console.log("Erreur MAJ settings :", error);
     }
   };
 

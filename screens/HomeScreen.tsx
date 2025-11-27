@@ -489,6 +489,8 @@ const HomeScreen = () => {
     }
   };
 
+  // console.log("token ->", user.)
+
   const sendImage = async (image_params = null) => {
     if (!image_params && !isSimulator) {
       Alert.alert("Erreur", "Aucune image sélectionnée");

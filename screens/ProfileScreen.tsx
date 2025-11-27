@@ -20,67 +20,84 @@ import {
 } from "../icon";
 import { useNavigation } from "@react-navigation/native";
 import { LoginScreenNavigationProp } from "./authStack/LoginScreen";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../config";
-import { onAuthStateChanged } from "firebase/auth";
+import { deleteUser, onAuthStateChanged } from "firebase/auth";
 import { useAuth } from "../authContext";
+import { Ionicons } from "@expo/vector-icons";
 
 const getColorBlindTheme = (isColorBlindMode) => {
   if (isColorBlindMode) {
     return {
-      primary: '#0066CC',
-      secondary: '#FFD700',
-      success: '#4A90E2',
-      warning: '#FF8C00',
-      danger: '#000000',
-      background: '#F8F9FA',
-      surface: '#FFFFFF',
-      text: '#000000',
-      textSecondary: '#4A4A4A',
-      border: '#CCCCCC',
-      shadow: '#000000',
-      
+      primary: "#0066CC",
+      secondary: "#FFD700",
+      success: "#4A90E2",
+      warning: "#FF8C00",
+      danger: "#000000",
+      background: "#F8F9FA",
+      surface: "#FFFFFF",
+      text: "#000000",
+      textSecondary: "#4A4A4A",
+      border: "#CCCCCC",
+      shadow: "#000000",
+
       buttonStyle: {
         borderWidth: 2,
-        borderColor: '#000000',
+        borderColor: "#000000",
       },
       textStyle: {
-        fontWeight: '600',
+        fontWeight: "600",
         fontSize: 16,
       },
       containerStyle: {
         borderWidth: 1,
-        borderColor: '#CCCCCC',
-      }
+        borderColor: "#CCCCCC",
+      },
     };
   } else {
     return {
       // Couleurs normales
-      primary: '#007bff',
-      secondary: '#6c757d',
-      success: '#28a745',
-      warning: '#ffc107',
-      danger: '#dc3545',
-      background: '#f8f9fa',
-      surface: '#ffffff',
-      text: '#000000',
-      textSecondary: '#6c757d',
-      border: '#dee2e6',
-      shadow: '#000000',
-      
+      primary: "#007bff",
+      secondary: "#6c757d",
+      success: "#28a745",
+      warning: "#ffc107",
+      danger: "#dc3545",
+      background: "#f8f9fa",
+      surface: "#ffffff",
+      text: "#000000",
+      textSecondary: "#6c757d",
+      border: "#dee2e6",
+      shadow: "#000000",
+
       buttonStyle: {},
       textStyle: {},
-      containerStyle: {}
+      containerStyle: {},
     };
   }
 };
 
 const ProfileScreen = () => {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
 
   return (
     <View style={{ flex: 1 }}>
       <BackGround middle={true} />
+      <TouchableOpacity
+        onPress={() => navigation.goBack()}
+        style={{
+          position: "absolute",
+          top: insets.top + 10,
+          left: 20,
+          zIndex: 10,
+          backgroundColor: "rgba(255,255,255,0.7)",
+          padding: 8,
+          borderRadius: 20,
+        }}
+      >
+        <Ionicons name="arrow-back" size={24} color="black" />
+      </TouchableOpacity>
+
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={{ height: insets.top }} />
         <View
@@ -107,7 +124,7 @@ const ProfileScreen = () => {
 
 const ProfileUser = () => {
   const { user } = useAuth();
-  
+
   // Détermine si le mode daltonien est activé
   const isColorBlindMode = user?.settings?.colorBlindMode || false;
   const theme = getColorBlindTheme(isColorBlindMode);
@@ -123,6 +140,7 @@ const ProfileUser = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editedInfo, setEditedInfo] = useState({});
   const [loading, setLoading] = useState(true);
+  const navigation = useState();
 
   const fetchUserInfo = async () => {
     if (!user?.uid) return;
@@ -175,6 +193,51 @@ const ProfileUser = () => {
       console.log("Erreur lors de la mise à jour :", error);
       Alert.alert("Erreur", "Impossible de mettre à jour vos informations");
     }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+
+    Alert.alert(
+      "Supprimer mon compte",
+      "ATTENTION : Cette action est irréversible. Toutes vos données seront effacées.",
+      [
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "Supprimer définitivement",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const docRef = doc(db, "client", user.uid);
+              await deleteDoc(docRef);
+
+              const userAuth = auth.currentUser;
+              if (userAuth) {
+                await deleteUser(userAuth);
+              }
+
+              navigation?.reset({
+                index: 0,
+                routes: [{ name: "Login" }],
+              });
+            } catch (error) {
+              console.log("Erreur lors de la suppression :", error);
+              if (error.code === "auth/requires-recent-login") {
+                Alert.alert(
+                  "Erreur",
+                  "Veuillez vous reconnecter pour supprimer votre compte."
+                );
+              } else {
+                Alert.alert(
+                  "Erreur",
+                  "Impossible de supprimer le compte : " + error.message
+                );
+              }
+            }
+          },
+        },
+      ]
+    );
   };
 
   const clearUserInfo = async () => {
@@ -257,7 +320,7 @@ const ProfileUser = () => {
           isColorBlindMode && {
             borderWidth: 3,
             borderColor: theme.primary,
-          }
+          },
         ]}
       >
         <Image
@@ -266,26 +329,26 @@ const ProfileUser = () => {
         />
       </View>
 
-      <ItemInfos 
-        icon={<IconAccount />} 
-        text={userInfo.name} 
+      <ItemInfos
+        icon={<IconAccount />}
+        text={userInfo.name}
         theme={theme}
         isColorBlindMode={isColorBlindMode}
       />
-      <ItemInfos 
-        icon={<IconMail />} 
-        text={userInfo.email} 
+      <ItemInfos
+        icon={<IconMail />}
+        text={userInfo.email}
         theme={theme}
         isColorBlindMode={isColorBlindMode}
       />
-      <ItemInfos 
-        icon={<IconPhone />} 
-        text={userInfo.phone} 
+      <ItemInfos
+        icon={<IconPhone />}
+        text={userInfo.phone}
         theme={theme}
         isColorBlindMode={isColorBlindMode}
       />
 
-      <TouchableOpacity 
+      <TouchableOpacity
         onPress={() => setIsEditModalVisible(true)}
         style={[
           theme.buttonStyle,
@@ -295,7 +358,7 @@ const ProfileUser = () => {
             paddingVertical: 10,
             borderRadius: 5,
             backgroundColor: theme.primary,
-          }
+          },
         ]}
       >
         <Text
@@ -303,16 +366,16 @@ const ProfileUser = () => {
             theme.textStyle,
             {
               color: theme.surface,
-              textAlign: 'center',
-            }
+              textAlign: "center",
+            },
           ]}
         >
           {isColorBlindMode ? "✏️ " : ""}Editer mes informations
         </Text>
       </TouchableOpacity>
 
-      <TouchableOpacity 
-        onPress={clearUserInfo} 
+      <TouchableOpacity
+        onPress={clearUserInfo}
         style={[
           theme.buttonStyle,
           {
@@ -320,10 +383,10 @@ const ProfileUser = () => {
             paddingHorizontal: 20,
             paddingVertical: 10,
             borderRadius: 5,
-            backgroundColor: isColorBlindMode ? theme.danger : 'lightblue',
+            backgroundColor: isColorBlindMode ? theme.danger : "lightblue",
             borderColor: theme.danger,
             borderWidth: 2,
-          }
+          },
         ]}
       >
         <Text
@@ -331,8 +394,8 @@ const ProfileUser = () => {
             theme.textStyle,
             {
               color: isColorBlindMode ? theme.surface : theme.danger,
-              textAlign: 'center',
-            }
+              textAlign: "center",
+            },
           ]}
         >
           {isColorBlindMode ? "🗑️ " : ""}Effacer mes informations
@@ -360,21 +423,20 @@ const ProfileUser = () => {
                 width: "90%",
                 padding: 20,
                 borderRadius: 10,
-                maxHeight: "80%",
               },
-              theme.containerStyle
+              theme.containerStyle,
             ]}
           >
             <Text
               style={[
                 theme.textStyle,
-                { 
-                  fontSize: 18, 
-                  fontWeight: "bold", 
+                {
+                  fontSize: 18,
+                  fontWeight: "bold",
                   marginBottom: 20,
                   color: theme.text,
-                  textAlign: 'center'
-                }
+                  textAlign: "center",
+                },
               ]}
             >
               {isColorBlindMode ? "✏️ " : ""}Modifier mes informations
@@ -382,7 +444,12 @@ const ProfileUser = () => {
 
             <ScrollView>
               <View style={{ marginBottom: 15 }}>
-                <Text style={[theme.textStyle, { marginBottom: 5, color: theme.text }]}>
+                <Text
+                  style={[
+                    theme.textStyle,
+                    { marginBottom: 5, color: theme.text },
+                  ]}
+                >
                   Nom :
                 </Text>
                 <TextInput
@@ -395,7 +462,7 @@ const ProfileUser = () => {
                       backgroundColor: theme.surface,
                       color: theme.text,
                     },
-                    theme.textStyle
+                    theme.textStyle,
                   ]}
                   value={
                     editedInfo.name !== undefined
@@ -411,7 +478,12 @@ const ProfileUser = () => {
               </View>
 
               <View style={{ marginBottom: 15 }}>
-                <Text style={[theme.textStyle, { marginBottom: 5, color: theme.text }]}>
+                <Text
+                  style={[
+                    theme.textStyle,
+                    { marginBottom: 5, color: theme.text },
+                  ]}
+                >
                   Email :
                 </Text>
                 <TextInput
@@ -424,7 +496,7 @@ const ProfileUser = () => {
                       backgroundColor: theme.surface,
                       color: theme.text,
                     },
-                    theme.textStyle
+                    theme.textStyle,
                   ]}
                   value={
                     editedInfo.email !== undefined
@@ -441,7 +513,12 @@ const ProfileUser = () => {
               </View>
 
               <View style={{ marginBottom: 15 }}>
-                <Text style={[theme.textStyle, { marginBottom: 5, color: theme.text }]}>
+                <Text
+                  style={[
+                    theme.textStyle,
+                    { marginBottom: 5, color: theme.text },
+                  ]}
+                >
                   Téléphone :
                 </Text>
                 <TextInput
@@ -454,7 +531,7 @@ const ProfileUser = () => {
                       backgroundColor: theme.surface,
                       color: theme.text,
                     },
-                    theme.textStyle
+                    theme.textStyle,
                   ]}
                   value={
                     editedInfo.phone !== undefined
@@ -491,13 +568,15 @@ const ProfileUser = () => {
                     borderRadius: 5,
                     marginRight: 10,
                   },
-                  theme.buttonStyle
+                  theme.buttonStyle,
                 ]}
               >
-                <Text style={[
-                  theme.textStyle, 
-                  { textAlign: "center", color: theme.surface }
-                ]}>
+                <Text
+                  style={[
+                    theme.textStyle,
+                    { textAlign: "center", color: theme.surface },
+                  ]}
+                >
                   {isColorBlindMode ? "❌ " : ""}Annuler
                 </Text>
               </TouchableOpacity>
@@ -512,13 +591,15 @@ const ProfileUser = () => {
                     borderRadius: 5,
                     marginLeft: 10,
                   },
-                  theme.buttonStyle
+                  theme.buttonStyle,
                 ]}
               >
-                <Text style={[
-                  theme.textStyle,
-                  { textAlign: "center", color: theme.surface }
-                ]}>
+                <Text
+                  style={[
+                    theme.textStyle,
+                    { textAlign: "center", color: theme.surface },
+                  ]}
+                >
                   {isColorBlindMode ? "💾 " : ""}Sauvegarder
                 </Text>
               </TouchableOpacity>
@@ -550,24 +631,23 @@ const ButtonParams = ({ theme, isColorBlindMode }) => {
             backgroundColor: theme.surface,
           },
           theme.containerStyle,
-          theme.buttonStyle
+          theme.buttonStyle,
         ]}
       >
         <IconTickets />
-        <Text style={[
-          theme.textStyle, 
-          { marginTop: 20, color: theme.text }
-        ]}>
+        <Text style={[theme.textStyle, { marginTop: 20, color: theme.text }]}>
           {isColorBlindMode ? "🎫 " : ""}Tickets
         </Text>
       </TouchableOpacity>
 
-      <View style={{ 
-        width: 2, 
-        height: 100, 
-        backgroundColor: theme.border,
-        marginHorizontal: 10 
-      }} />
+      <View
+        style={{
+          width: 2,
+          height: 100,
+          backgroundColor: theme.border,
+          marginHorizontal: 10,
+        }}
+      />
 
       <TouchableOpacity
         onPress={() => {
@@ -584,14 +664,11 @@ const ButtonParams = ({ theme, isColorBlindMode }) => {
             backgroundColor: theme.surface,
           },
           theme.containerStyle,
-          theme.buttonStyle
+          theme.buttonStyle,
         ]}
       >
         <IconSettings />
-        <Text style={[
-          theme.textStyle,
-          { marginTop: 20, color: theme.text }
-        ]}>
+        <Text style={[theme.textStyle, { marginTop: 20, color: theme.text }]}>
           {isColorBlindMode ? "⚙️ " : ""}Paramètres
         </Text>
       </TouchableOpacity>
@@ -624,12 +701,10 @@ const ItemInfos = ({ icon, text, theme, isColorBlindMode }) => {
             },
             shadowColor: theme.shadow,
           },
-          theme.containerStyle
+          theme.containerStyle,
         ]}
       >
-        <Text style={[theme.textStyle, { color: theme.text }]}>
-          {text}
-        </Text>
+        <Text style={[theme.textStyle, { color: theme.text }]}>{text}</Text>
       </View>
     </View>
   );
