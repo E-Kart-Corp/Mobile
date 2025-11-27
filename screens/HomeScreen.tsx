@@ -29,6 +29,7 @@ import {
 import { IconLocation } from "../icon";
 import { useNavigation } from "@react-navigation/native";
 import { useAudioPlayer } from "expo-audio";
+import Constants from "expo-constants";
 import { Camera, CameraView } from "expo-camera";
 import * as Device from "expo-device";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -40,6 +41,7 @@ import { triggerFeedback } from "../component/trigger_feedback";
 import * as Haptics from "expo-haptics";
 
 import ReactNativeHapticFeedback from "react-native-haptic-feedback";
+import { sha1 } from "../utils";
 
 const audioSource = require("../assets/sounds/feedback.mp3");
 
@@ -75,7 +77,9 @@ const HomeScreen = () => {
   // user.settings.vibrations # son vibrations
 
   const [stores, setStores] = useState([]);
-  const [selectedStoreId, setSelectedStoreId] = useState("carrefour_sartrouville");
+  const [selectedStoreId, setSelectedStoreId] = useState(
+    "carrefour_sartrouville"
+  );
 
   // Vérifier si VoiceOver est activé
   useEffect(() => {
@@ -512,11 +516,36 @@ const HomeScreen = () => {
     console.log(fileType);
 
     const formData = new FormData();
-    formData.append("image", {
-      uri: isSimulator ? image : image_params,
-      name: `image.${fileType}`,
-      type: `image/${fileType}`,
-    });
+    formData.append(
+      "image",
+      {
+        uri: isSimulator ? image : image_params,
+        name: `image.${fileType}`,
+        type: `image/${fileType}`,
+      } as any
+    );
+
+    const apiToken =
+      process.env.EXPO_PUBLIC_API_TOKEN ||
+      Constants?.expoConfig?.extra?.apiToken ||
+      Constants?.manifest2?.extra?.apiToken ||
+      Constants?.manifest?.extra?.apiToken;
+
+    let hashedApiKey = null;
+
+    if (!apiToken) {
+      console.warn(
+        "API token is not defined. Add EXPO_PUBLIC_API_TOKEN to your env or app config."
+      );
+    } else {
+      try {
+        hashedApiKey = await sha1(apiToken);
+      } catch (err) {
+        console.warn("Unable to hash API token", err);
+      }
+    }
+
+    console.log (hashedApiKey)
 
     try {
       const response = await fetch(
@@ -527,6 +556,7 @@ const HomeScreen = () => {
           body: formData,
           headers: {
             "Content-Type": "multipart/form-data",
+            ...(hashedApiKey ? { "x-api-key": hashedApiKey } : {}),
           },
         }
       );
