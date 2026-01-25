@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -35,8 +36,9 @@ export type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList>;
 const LoginScreen = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { announce, triggerFeedback } = useAccessibility();
-  const [email, setEmail] = useState("briceuh290@gmail.com");
-  const [password, setPassword] = useState("Password");
+  const [email, setEmail] = useState(""); // briceuh290@gmail.com
+  const [password, setPassword] = useState(""); // Password
+  const [showPassword, setShowPassword] = useState(false);
   const insets = useSafeAreaInsets();
 
   const handleLogin = async () => {
@@ -121,29 +123,55 @@ const LoginScreen = () => {
           accessibilityHint="Entrez votre adresse email"
         />
 
-        <TextInput
+        <View
           style={{
             width: "90%",
-            backgroundColor: "white",
             alignSelf: "center",
             marginTop: 20,
-            paddingHorizontal: 16,
-            paddingVertical: 17,
-            borderRadius: 18,
             marginBottom: 16,
-            shadowOpacity: 0.5,
-            shadowRadius: 3,
-            shadowOffset: { height: 0, width: 0 },
           }}
-          placeholder="Mot de passe"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          autoCapitalize="none"
-          accessible={true}
-          accessibilityLabel="Champ de saisie mot de passe"
-          accessibilityHint="Entrez votre mot de passe"
-        />
+        >
+          <TextInput
+            style={{
+              width: "100%",
+              backgroundColor: "white",
+              paddingHorizontal: 16,
+              paddingVertical: 17,
+              paddingRight: 48,
+              borderRadius: 18,
+              shadowOpacity: 0.5,
+              shadowRadius: 3,
+              shadowOffset: { height: 0, width: 0 },
+            }}
+            placeholder="Mot de passe"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+            autoCapitalize="none"
+            accessible={true}
+            accessibilityLabel="Champ de saisie mot de passe"
+            accessibilityHint="Entrez votre mot de passe"
+          />
+          <TouchableOpacity
+            onPress={() => { triggerFeedback("selection"); setShowPassword((v) => !v); }}
+            style={{
+              position: "absolute",
+              right: 12,
+              top: 0,
+              bottom: 0,
+              justifyContent: "center",
+            }}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+          >
+            <Ionicons
+              name={showPassword ? "eye-off-outline" : "eye-outline"}
+              size={22}
+              color="#666"
+            />
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity
           onPress={() => { triggerFeedback("selection"); navigation.navigate("LostPassword"); }}

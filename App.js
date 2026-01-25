@@ -40,7 +40,7 @@ export default function App() {
           },
         ]
       );
-    }, 3 * 60 * 1000); // 5 minutes
+    }, 3 * 60 * 1000); // 3 minutes
   
     return () => clearTimeout(timeout);
   }, []);

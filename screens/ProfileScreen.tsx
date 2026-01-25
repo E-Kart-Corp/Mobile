@@ -152,10 +152,10 @@ const ProfileUser = () => {
       if (docSnap.exists()) {
         const userData = docSnap.data();
         setUserInfo({
-          name: userData.name || "Nom non renseigné",
-          email: userData.email || user.email || "Email non renseigné",
-          phone: userData.phone || "Téléphone non renseigné",
-          card: userData.card || "Carte non renseignée",
+          name: userData.name || "",
+          email: userData.email || user.email || "",
+          phone: userData.phone || "",
+          card: userData.card || "",
           profileImage: userData.profileImage || userInfo.profileImage,
         });
       }

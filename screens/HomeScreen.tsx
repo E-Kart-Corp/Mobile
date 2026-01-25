@@ -11,6 +11,7 @@ import {
   Alert,
   Dimensions,
   Vibration,
+  Linking,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { onAuthStateChanged } from "firebase/auth";
@@ -267,6 +268,26 @@ const HomeScreen = () => {
     );
   };
 
+const FEEDBACK_FORM_URL = "https://form.typeform.com/to/slfqQd2p";
+
+  const popUp= () => {
+    const timeout = setTimeout(() => {
+      Alert.alert(
+        "Votre avis compte",
+        "Merci de nous aider à nous améliorer en répondant à ce questionnaire.",
+        [
+          { text: "Fermer", style: "cancel" },
+          {
+            text: "Remplir le formulaire",
+            onPress: () => Linking.openURL(FEEDBACK_FORM_URL),
+          },
+        ]
+      );
+    }, 20 * 1000); // 20 seconds
+  
+    return () => clearTimeout(timeout)
+  }
+
   const processPayment = async () => {
     if (!user?.uid || validBasketLength === 0) return;
 
@@ -293,75 +314,77 @@ const HomeScreen = () => {
               announce("Paiement en cours, veuillez patienter");
               triggerFeedback("success");
 
+              popUp()
+              
               // Récupérer le token API pour l'authentification
-              const apiToken =
-                process.env.EXPO_PUBLIC_API_TOKEN ||
-                Constants?.expoConfig?.extra?.apiToken ||
-                Constants?.manifest2?.extra?.apiToken ||
-                Constants?.manifest?.extra?.apiToken;
+              // const apiToken =
+              //   process.env.EXPO_PUBLIC_API_TOKEN ||
+              //   Constants?.expoConfig?.extra?.apiToken ||
+              //   Constants?.manifest2?.extra?.apiToken ||
+              //   Constants?.manifest?.extra?.apiToken;
 
-              let hashedApiKey = null;
-              if (apiToken) {
-                try {
-                  hashedApiKey = await sha1(apiToken);
-                } catch (err) {
-                  console.warn("Unable to hash API token", err);
-                }
-              }
+              // let hashedApiKey = null;
+              // if (apiToken) {
+              //   try {
+              //     hashedApiKey = await sha1(apiToken);
+              //   } catch (err) {
+              //     console.warn("Unable to hash API token", err);
+              //   }
+              // }
 
-              // Appeler l'endpoint pour créer le PaymentIntent
-              const response = await fetch(
-                `${API_BASE_URL}/client/createPaymentIntent`,
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    ...(hashedApiKey ? { "x-api-key": hashedApiKey } : {}),
-                  },
-                  body: JSON.stringify({
-                    amount: Math.round(totalAmount * 100), // Convertir en centimes
-                    currency: "eur",
-                    userId: user.uid,
-                    storeId: selectedStoreId,
-                  }),
-                }
-              );
+              // // Appeler l'endpoint pour créer le PaymentIntent
+              // const response = await fetch(
+              //   `${API_BASE_URL}/client/createPaymentIntent`,
+              //   {
+              //     method: "POST",
+              //     headers: {
+              //       "Content-Type": "application/json",
+              //       ...(hashedApiKey ? { "x-api-key": hashedApiKey } : {}),
+              //     },
+              //     body: JSON.stringify({
+              //       amount: Math.round(totalAmount * 100), // Convertir en centimes
+              //       currency: "eur",
+              //       userId: user.uid,
+              //       storeId: selectedStoreId,
+              //     }),
+              //   }
+              // );
 
-              if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(
-                  errorData.error || "Erreur lors de la création du PaymentIntent"
-                );
-              }
+              // if (!response.ok) {
+              //   const errorData = await response.json();
+              //   throw new Error(
+              //     errorData.error || "Erreur lors de la création du PaymentIntent"
+              //   );
+              // }
 
-              const { clientSecret } = await response.json();
+              // const { clientSecret } = await response.json();
 
-              if (!clientSecret) {
-                throw new Error("Client secret manquant dans la réponse");
-              }
+              // if (!clientSecret) {
+              //   throw new Error("Client secret manquant dans la réponse");
+              // }
 
-              // Initialiser le PaymentSheet avec le clientSecret
-              const { error: initError } = await initPaymentSheet({
-                paymentIntentClientSecret: clientSecret,
-                merchantDisplayName: "E-Kart",
-              });
+              // // Initialiser le PaymentSheet avec le clientSecret
+              // const { error: initError } = await initPaymentSheet({
+              //   paymentIntentClientSecret: clientSecret,
+              //   merchantDisplayName: "E-Kart",
+              // });
 
-              if (initError) {
-                throw new Error(initError.message);
-              }
+              // if (initError) {
+              //   throw new Error(initError.message);
+              // }
 
-              // Présenter le PaymentSheet
-              const { error: presentError } = await presentPaymentSheet();
+              // // Présenter le PaymentSheet
+              // const { error: presentError } = await presentPaymentSheet();
 
-              if (presentError) {
-                if (presentError.code !== "Canceled") {
-                  throw new Error(presentError.message);
-                } else {
-                  // L'utilisateur a annulé le paiement
-                  announce("Paiement annulé");
-                  return;
-                }
-              }
+              // if (presentError) {
+              //   if (presentError.code !== "Canceled") {
+              //     throw new Error(presentError.message);
+              //   } else {
+              //     // L'utilisateur a annulé le paiement
+              //     announce("Paiement annulé");
+              //     return;
+              //   }
+              // }
 
               // Paiement réussi
               // Calculer le montant total pour le ticket

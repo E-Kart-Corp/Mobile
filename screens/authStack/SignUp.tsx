@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import {
   signInWithEmailAndPassword,
@@ -30,9 +31,11 @@ import { useAccessibility } from "../../accessibilityContext";
 const SignUp = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { announce, triggerFeedback } = useAccessibility();
-  const [email, setEmail] = useState("briceuh290@gmail.com");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSignUp = async () => {
     try {
@@ -116,29 +119,59 @@ const SignUp = () => {
             accessibilityHint="Entrez votre adresse email"
           />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Mot de passe"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoCapitalize="none"
-            accessible={true}
-            accessibilityLabel="Champ mot de passe"
-            accessibilityHint="Choisissez un mot de passe"
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={[styles.input, styles.passwordInput]}
+              placeholder="Mot de passe"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              accessible={true}
+              accessibilityLabel="Champ mot de passe"
+              accessibilityHint="Choisissez un mot de passe"
+            />
+            <TouchableOpacity
+              onPress={() => { triggerFeedback("selection"); setShowPassword((v) => !v); }}
+              style={styles.eyeButton}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+            >
+              <Ionicons
+                name={showPassword ? "eye-off-outline" : "eye-outline"}
+                size={22}
+                color="#666"
+              />
+            </TouchableOpacity>
+          </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Confirmer mot de passe"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-            autoCapitalize="none"
-            accessible={true}
-            accessibilityLabel="Confirmer le mot de passe"
-            accessibilityHint="Saisissez à nouveau le mot de passe"
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={[styles.input, styles.passwordInput]}
+              placeholder="Confirmer mot de passe"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry={!showConfirmPassword}
+              autoCapitalize="none"
+              accessible={true}
+              accessibilityLabel="Confirmer le mot de passe"
+              accessibilityHint="Saisissez à nouveau le mot de passe"
+            />
+            <TouchableOpacity
+              onPress={() => { triggerFeedback("selection"); setShowConfirmPassword((v) => !v); }}
+              style={styles.eyeButton}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={showConfirmPassword ? "Masquer la confirmation" : "Afficher la confirmation"}
+            >
+              <Ionicons
+                name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
+                size={22}
+                color="#666"
+              />
+            </TouchableOpacity>
+          </View>
 
           <View style={{ width: "100%", alignItems: "center" }}>
             <TouchableOpacity
@@ -172,7 +205,7 @@ const SignUp = () => {
   );
 };
 
-const styles = {
+const styles = StyleSheet.create({
   input: {
     width: "90%",
     backgroundColor: "white",
@@ -185,6 +218,23 @@ const styles = {
     shadowRadius: 3,
     shadowOffset: { height: 0, width: 0 },
   },
-};
+  passwordContainer: {
+    width: "90%",
+    alignSelf: "center",
+    marginTop: 20,
+  },
+  passwordInput: {
+    width: "100%",
+    marginTop: 0,
+    paddingRight: 48,
+  },
+  eyeButton: {
+    position: "absolute",
+    right: 12,
+    top: 0,
+    bottom: 0,
+    justifyContent: "center",
+  },
+});
 
 export default SignUp;
