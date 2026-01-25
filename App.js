@@ -13,6 +13,7 @@ import TicketsScreen from "./screens/TicketScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 import OnboardingScreen from "./screens/OnboardingScreen";
 import { AuthProvider } from "./authContext";
+import { AccessibilityProvider } from "./accessibilityContext";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -29,6 +30,7 @@ export default function App() {
 
   return (
     <AuthProvider>
+      <AccessibilityProvider>
       <NavigationContainer>
         <Stack.Navigator
           initialRouteName={user ? "TabStack" : "Login"}
@@ -84,6 +86,7 @@ export default function App() {
           />
         </Stack.Navigator>
       </NavigationContainer>
+      </AccessibilityProvider>
     </AuthProvider>
   );
 }

@@ -15,7 +15,7 @@ import { auth } from "../../config";
 import { BackGround } from "../../component/background";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ONBOARDING_STORAGE_KEY } from "../../storageKeys";
-
+import { useAccessibility } from "../../accessibilityContext";
 import { StackNavigationProp } from "@react-navigation/stack";
 
 type AuthStackParamList = {
@@ -34,6 +34,7 @@ export type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList>;
 
 const LoginScreen = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { announce, triggerFeedback } = useAccessibility();
   const [email, setEmail] = useState("briceuh290@gmail.com");
   const [password, setPassword] = useState("Password");
   const insets = useSafeAreaInsets();
@@ -41,8 +42,10 @@ const LoginScreen = () => {
   const handleLogin = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      announce("Connexion réussie");
+      triggerFeedback("success");
       const hasCompletedOnboarding =
-        (await AsyncStorage.getItem(ONBOARDING_STORAGE_KEY)) === "false";
+        (await AsyncStorage.getItem(ONBOARDING_STORAGE_KEY)) === "true";
       navigation.reset({
         index: 0,
         routes: [
@@ -51,29 +54,33 @@ const LoginScreen = () => {
       });
     } catch (error: any) {
       console.log("Firebase login error:", error);
+      let msg = "Une erreur est survenue.";
       switch (error.code) {
         case "auth/invalid-email":
-          Alert.alert("Erreur", "Adresse email invalide.");
+          msg = "Adresse email invalide.";
           break;
         case "auth/user-not-found":
-          Alert.alert("Erreur", "Aucun utilisateur trouvé avec cet email.");
+          msg = "Aucun utilisateur trouvé avec cet email.";
           break;
         case "auth/wrong-password":
-          Alert.alert("Erreur", "Mot de passe incorrect.");
+          msg = "Mot de passe incorrect.";
           break;
         case "auth/invalid-credential":
-          Alert.alert("Erreur", "Email ou mot de passe invalide.");
+          msg = "Email ou mot de passe invalide.";
           break;
         default:
-          Alert.alert("Erreur", error.message || "Une erreur est survenue.");
+          msg = error.message || msg;
       }
+      announce("Erreur de connexion. " + msg);
+      triggerFeedback("error");
+      Alert.alert("Erreur", msg);
     }
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1 }} accessible={true} accessibilityLabel="Écran de connexion">
       <BackGround middle={false} />
-      <ScrollView>
+      <ScrollView accessible={true} accessibilityLabel="Formulaire de connexion">
         <View style={{ height: insets.top }} />
 
         <View
@@ -139,7 +146,7 @@ const LoginScreen = () => {
         />
 
         <TouchableOpacity
-          onPress={() => navigation.navigate("LostPassword")}
+          onPress={() => { triggerFeedback("selection"); navigation.navigate("LostPassword"); }}
           accessible={true}
           accessibilityRole="button"
           accessibilityLabel="Mot de passe oublié"
@@ -158,7 +165,7 @@ const LoginScreen = () => {
 
         <View style={{ width: "100%", alignItems: "center" }}>
           <TouchableOpacity
-            onPress={handleLogin}
+            onPress={() => { triggerFeedback("selection"); handleLogin(); }}
             style={{
               padding: 12,
               marginTop: 20,
@@ -203,7 +210,7 @@ const LoginScreen = () => {
       </TouchableOpacity> */}
 
       <TouchableOpacity
-        onPress={() => navigation.navigate("SignUp")}
+        onPress={() => { triggerFeedback("selection"); navigation.navigate("SignUp"); }}
         accessible={true}
         accessibilityRole="button"
         accessibilityLabel="S'inscrire"

@@ -14,27 +14,33 @@ import { auth } from "../../config";
 import { BackGround } from "../../component/background";
 import MyHeader from "../../component/my_header";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAccessibility } from "../../accessibilityContext";
 
 const LostPassword = () => {
   const navigation = useNavigation();
+  const { announce, triggerFeedback } = useAccessibility();
   const [email, setEmail] = useState("briceuh29@gmail.com");
   const insets = useSafeAreaInsets();
 
   const handleLostPassword = async () => {
     try {
       await sendPasswordResetEmail(auth, email);
+      announce("Email de réinitialisation envoyé. Vérifiez votre boîte de réception.");
+      triggerFeedback("success");
       Alert.alert("Succès", "Un email de réinitialisation a été envoyé.");
     } catch (error: any) {
+      announce("Erreur : " + (error.message || "impossible d'envoyer l'email"));
+      triggerFeedback("error");
       Alert.alert("Erreur", error.message);
     }
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1 }} accessible={true} accessibilityLabel="Récupération de mot de passe">
       <BackGround middle={false} />
       <MyHeader />
 
-      <ScrollView>
+      <ScrollView accessible={true} accessibilityLabel="Formulaire de réinitialisation du mot de passe">
         <View style={{ height: insets.top }} />
 
         <View
@@ -77,7 +83,7 @@ const LostPassword = () => {
 
         <View style={{ width: "100%", alignItems: "center" }}>
           <TouchableOpacity
-            onPress={handleLostPassword}
+            onPress={() => { triggerFeedback("selection"); handleLostPassword(); }}
             style={{
               padding: 12,
               marginTop: 20,

@@ -16,38 +16,15 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../config";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useAuth } from "../authContext";
-
-const getColorBlindTheme = (isColorBlindMode) => {
-  if (isColorBlindMode) {
-    return {
-      text: '#000000',
-      textSecondary: '#4A4A4A',
-      background: '#F8F9FA',
-      cardBackground: '#FFFFFF',
-      border: '#000000',
-      toggleActive: '#FFD700',
-      toggleInactive: '#CCCCCC',
-    };
-  } else {
-    return {
-      text: '#333333',
-      textSecondary: '#666666',
-      background: '#ffffff',
-      cardBackground: '#ffffff',
-      border: '#f0f0f0',
-      toggleActive: '#007bff',
-      toggleInactive: '#ccc',
-    };
-  }
-};
+import { useAccessibility } from "../accessibilityContext";
 
 const SettingsScreen = () => {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1 }} accessible={true} accessibilityLabel="Écran des paramètres">
       <BackGround middle={true} />
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} accessible={true} accessibilityLabel="Liste des paramètres de l'application">
         <View style={{ height: insets.top }} />
         <View
           style={{
@@ -57,7 +34,7 @@ const SettingsScreen = () => {
             marginTop: 50,
           }}
         >
-          <IconSettings style={{ marginBottom: 20 }} />
+          <IconSettings style={{ marginBottom: 20 }} accessible={false} />
           <Text
             style={{
               fontSize: 24,
@@ -65,6 +42,9 @@ const SettingsScreen = () => {
               marginBottom: 30,
               color: "#333",
             }}
+            accessible={true}
+            accessibilityRole="header"
+            accessibilityLabel="Paramètres"
           >
             Paramètres
           </Text>
@@ -78,16 +58,16 @@ const SettingsScreen = () => {
 const SettingsContent = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { user, refreshUserData } = useAuth();
+  const { theme, triggerFeedback, announce } = useAccessibility();
   const [loading, setLoading] = useState(true);
-  const isColorBlind = user?.settings?.colorBlindMode || false;
-  const theme = getColorBlindTheme(isColorBlind);
 
-  // États pour les paramètres
   const [settings, setSettings] = useState({
     notifications: true,
     sounds: true,
     vibrations: true,
-    colorBlindMode: isColorBlind,
+    colorBlindMode: false,
+    highContrast: false,
+    reduceMotion: false,
   });
 
   // Récupérer les paramètres depuis Firebase
@@ -106,6 +86,8 @@ const SettingsContent = () => {
             sounds: userData.settings.sounds ?? true,
             vibrations: userData.settings.vibrations ?? true,
             colorBlindMode: userData.settings.colorBlindMode ?? false,
+            highContrast: userData.settings.highContrast ?? false,
+            reduceMotion: userData.settings.reduceMotion ?? false,
           });
         }
       }
@@ -172,10 +154,12 @@ const SettingsContent = () => {
       style={{ alignItems: "center", width: "100%", paddingHorizontal: 20 }}
     >
       {/* Section Notifications */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Notifications</Text>
-
+      <View style={[styles.sectionContainer, { backgroundColor: theme.cardBackground }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]} accessible={true} accessibilityRole="header">
+          Notifications
+        </Text>
         <SettingItem
+          theme={theme}
           title="Notifications push"
           description="Recevoir les notifications de l'application"
           value={settings.notifications}
@@ -183,39 +167,50 @@ const SettingsContent = () => {
             const newSettings = { ...settings, notifications: value };
             updateSettings(newSettings);
           }}
+          accessibilityLabel="Notifications push"
+          accessibilityHint="Active ou désactive les notifications de l'application"
         />
       </View>
 
-      {/* Section Audio & Vibrations */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Audio & Vibrations</Text>
-
+      {/* Section Audio & Vibrations — utiles pour les déficients auditifs (retour tactile) */}
+      <View style={[styles.sectionContainer, { backgroundColor: theme.cardBackground }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]} accessible={true} accessibilityRole="header" accessibilityLabel="Audio et vibrations, retours sonores et tactiles">
+          Audio & Vibrations
+        </Text>
         <SettingItem
+          theme={theme}
           title="Sons"
-          description="Activer les sons de l'application"
+          description="Sons de confirmation (alternative auditive au retour visuel)"
           value={settings.sounds}
           onValueChange={(value) => {
             const newSettings = { ...settings, sounds: value };
             updateSettings(newSettings);
           }}
+          accessibilityLabel="Sons"
+          accessibilityHint="Active les sons de l'application pour les personnes malvoyantes"
         />
-
         <SettingItem
+          theme={theme}
           title="Vibrations"
-          description="Activer les vibrations"
+          description="Retour haptique (utile pour les déficients visuels et auditifs)"
           value={settings.vibrations}
           onValueChange={(value) => {
             const newSettings = { ...settings, vibrations: value };
             updateSettings(newSettings);
           }}
+          accessibilityLabel="Vibrations"
+          accessibilityHint="Active les vibrations pour un retour tactile"
         />
       </View>
 
       {/* Section Accessibilité */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Accessibilité</Text>
+      <View style={[styles.sectionContainer, { backgroundColor: theme.cardBackground }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]} accessible={true} accessibilityRole="header" accessibilityLabel="Paramètres d'accessibilité">
+          Accessibilité
+        </Text>
 
         <SettingItem
+          theme={theme}
           title="Mode daltonien"
           description="Adapter les couleurs pour les personnes daltoniennes"
           value={settings.colorBlindMode}
@@ -223,23 +218,50 @@ const SettingsContent = () => {
             const newSettings = { ...settings, colorBlindMode: value };
             updateSettings(newSettings);
           }}
+          accessibilityLabel="Mode daltonien"
+          accessibilityHint="Active ou désactive l'adaptation des couleurs pour les personnes daltoniennes"
+        />
+        <SettingItem
+          theme={theme}
+          title="Contraste élevé"
+          description="Renforce les contours et le contraste pour une meilleure lisibilité"
+          value={settings.highContrast}
+          onValueChange={(value) => {
+            const newSettings = { ...settings, highContrast: value };
+            updateSettings(newSettings);
+          }}
+          accessibilityLabel="Contraste élevé"
+          accessibilityHint="Active un affichage à fort contraste pour les personnes malvoyantes"
+        />
+        <SettingItem
+          theme={theme}
+          title="Réduire les animations"
+          description="Désactive ou réduit les animations pour les personnes sensibles au mouvement"
+          value={settings.reduceMotion}
+          onValueChange={(value) => {
+            const newSettings = { ...settings, reduceMotion: value };
+            updateSettings(newSettings);
+          }}
+          accessibilityLabel="Réduire les animations"
+          accessibilityHint="Limite les animations pour plus de confort"
         />
       </View>
 
       {/* Section Aide */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Aide</Text>
-
+      <View style={[styles.sectionContainer, { backgroundColor: theme.cardBackground }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]} accessible={true} accessibilityRole="header">
+          Aide
+        </Text>
         <TouchableOpacity
-          onPress={() => navigation.navigate("Onboarding", { replay: true })}
+          onPress={() => { triggerFeedback("selection"); navigation.navigate("Onboarding", { replay: true }); }}
           style={styles.helpItem}
           accessible={true}
           accessibilityRole="button"
           accessibilityLabel="Revoir le tutoriel"
           accessibilityHint="Ouvre le tutoriel de prise en main de l'application"
         >
-          <Text style={styles.settingTitle}>Revoir le tutoriel</Text>
-          <Text style={styles.settingDescription}>
+          <Text style={[styles.settingTitle, { color: theme.text }]}>Revoir le tutoriel</Text>
+          <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
             Revoir le guide de prise en main de l'application
           </Text>
         </TouchableOpacity>
@@ -247,8 +269,12 @@ const SettingsContent = () => {
 
       {/* Bouton Retour au profil */}
       <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={[styles.button, styles.profileButton]}
+        onPress={() => { triggerFeedback("selection"); navigation.goBack(); }}
+        style={[styles.button, styles.profileButton, { backgroundColor: theme.primary || "#007bff" }]}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="Retour au profil"
+        accessibilityHint="Retourne à l'écran de profil"
       >
         <IconAccount />
         <Text style={styles.profileButtonText}>Retour au profil</Text>
@@ -258,6 +284,10 @@ const SettingsContent = () => {
       <TouchableOpacity
         onPress={handleLogout}
         style={[styles.button, styles.logoutButton]}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="Se déconnecter"
+        accessibilityHint="Fermer la session et revenir à l'écran de connexion"
       >
         <Text style={styles.logoutButtonText}>Se déconnecter</Text>
       </TouchableOpacity>
@@ -265,18 +295,23 @@ const SettingsContent = () => {
   );
 };
 
-const SettingItem = ({ title, description, value, onValueChange }) => {
+const SettingItem = ({ theme, title, description, value, onValueChange, accessibilityLabel, accessibilityHint }) => {
+  const t = theme || { toggleActive: "#007bff", toggleInactive: "#ccc", text: "#333", textSecondary: "#666" };
   return (
-    <View style={styles.settingItem}>
+    <View style={[styles.settingItem, { borderBottomColor: t.border || "#f0f0f0" }]}>
       <View style={styles.settingTextContainer}>
-        <Text style={styles.settingTitle}>{title}</Text>
-        <Text style={styles.settingDescription}>{description}</Text>
+        <Text style={[styles.settingTitle, { color: t.text }]}>{title}</Text>
+        <Text style={[styles.settingDescription, { color: t.textSecondary }]}>{description}</Text>
       </View>
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ false: "#ccc", true: "#007bff" }}
+        trackColor={{ false: t.toggleInactive, true: t.toggleActive }}
         thumbColor={value ? "#fff" : "#f4f3f4"}
+        accessible={true}
+        accessibilityLabel={accessibilityLabel || `${title}, ${value ? "activé" : "désactivé"}`}
+        accessibilityHint={accessibilityHint || description}
+        accessibilityRole="switch"
       />
     </View>
   );

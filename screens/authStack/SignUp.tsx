@@ -25,9 +25,11 @@ import { Image } from "react-native";
 import MyHeader from "../../component/my_header";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LoginScreenNavigationProp } from "./LoginScreen";
+import { useAccessibility } from "../../accessibilityContext";
 
 const SignUp = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { announce, triggerFeedback } = useAccessibility();
   const [email, setEmail] = useState("briceuh290@gmail.com");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -35,7 +37,10 @@ const SignUp = () => {
   const handleSignUp = async () => {
     try {
       if (password !== confirmPassword) {
-        Alert.alert("Mot de passe différent")
+        announce("Les deux mots de passe ne correspondent pas.");
+        triggerFeedback("error");
+        Alert.alert("Erreur", "Mot de passe différent");
+        return;
       }
       await signOut(auth);
       const val = await createUserWithEmailAndPassword(auth, email, password);
@@ -43,6 +48,8 @@ const SignUp = () => {
       const userDoc = await getDoc(userRef);
 
       if (userDoc.exists()) {
+        announce("Un compte existe déjà avec cet email.");
+        triggerFeedback("error");
         Alert.alert("Erreur", "L'email existe déjà");
         return;
       }
@@ -53,20 +60,24 @@ const SignUp = () => {
         current_kart: { idStore: "", kart: [] },
       });
 
+      announce("Compte créé. Vous pouvez vous connecter.");
+      triggerFeedback("success");
       navigation.navigate("Login");
-    } catch (error) {
-      // Alert.alert("Erreur", error.message);
+    } catch (error: any) {
+      const msg = error?.message || "Une erreur est survenue.";
+      announce("Erreur lors de l'inscription. " + msg);
+      triggerFeedback("error");
+      Alert.alert("Erreur", msg);
     }
   };
 
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1 }} accessible={true} accessibilityLabel="Création de compte">
       <BackGround middle={false} />
       <MyHeader />
 
-      {/* CORRECTION LAYOUT : KeyboardAvoidingView pour l'accessibilité du bouton */}
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
@@ -74,6 +85,8 @@ const SignUp = () => {
         <ScrollView
           contentContainerStyle={{ flexGrow: 1, paddingBottom: 50 }}
           showsVerticalScrollIndicator={false}
+          accessible={true}
+          accessibilityLabel="Formulaire d'inscription"
         >
           <View style={{ height: insets.top }} />
           <View
@@ -91,7 +104,6 @@ const SignUp = () => {
             />
           </View>
 
-          {/* Email Input */}
           <TextInput
             style={styles.input}
             placeholder="Email"
@@ -99,9 +111,11 @@ const SignUp = () => {
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
+            accessible={true}
+            accessibilityLabel="Champ email"
+            accessibilityHint="Entrez votre adresse email"
           />
 
-          {/* Password Input */}
           <TextInput
             style={styles.input}
             placeholder="Mot de passe"
@@ -109,9 +123,11 @@ const SignUp = () => {
             onChangeText={setPassword}
             secureTextEntry
             autoCapitalize="none"
+            accessible={true}
+            accessibilityLabel="Champ mot de passe"
+            accessibilityHint="Choisissez un mot de passe"
           />
 
-          {/* Confirm Password Input - CORRIGÉ : utilise la variable confirmPassword */}
           <TextInput
             style={styles.input}
             placeholder="Confirmer mot de passe"
@@ -119,11 +135,14 @@ const SignUp = () => {
             onChangeText={setConfirmPassword}
             secureTextEntry
             autoCapitalize="none"
+            accessible={true}
+            accessibilityLabel="Confirmer le mot de passe"
+            accessibilityHint="Saisissez à nouveau le mot de passe"
           />
 
           <View style={{ width: "100%", alignItems: "center" }}>
             <TouchableOpacity
-              onPress={handleSignUp}
+              onPress={() => { triggerFeedback("selection"); handleSignUp(); }}
               style={{
                 padding: 12,
                 marginTop: 20,
@@ -137,8 +156,12 @@ const SignUp = () => {
                 shadowRadius: 3,
                 shadowColor: "rgba(0,122,84, 1)",
                 shadowOffset: { height: 0, width: 0 },
-                marginBottom: 30, // Marge extra en bas
+                marginBottom: 30,
               }}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="S'inscrire"
+              accessibilityHint="Créer un compte avec les informations saisies"
             >
               <Text style={{ color: "white" }}>S'inscrire</Text>
             </TouchableOpacity>

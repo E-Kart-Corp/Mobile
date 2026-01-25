@@ -11,7 +11,6 @@ import {
   Alert,
   Dimensions,
   Vibration,
-  AccessibilityInfo,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { onAuthStateChanged } from "firebase/auth";
@@ -28,7 +27,6 @@ import {
 } from "firebase/firestore";
 import { IconLocation } from "../icon";
 import { useNavigation } from "@react-navigation/native";
-import { useAudioPlayer } from "expo-audio";
 import Constants from "expo-constants";
 import { Camera, CameraView } from "expo-camera";
 import * as Device from "expo-device";
@@ -37,21 +35,16 @@ import { ModalList } from "../component/modal_list";
 import { ButtonOpenModal } from "../component/button_open_modal";
 import { LoginScreenNavigationProp } from "./authStack/LoginScreen";
 import { useAuth } from "../authContext";
-import { triggerFeedback } from "../component/trigger_feedback";
-import * as Haptics from "expo-haptics";
-
-import ReactNativeHapticFeedback from "react-native-haptic-feedback";
+import { useAccessibility } from "../accessibilityContext";
 import { sha1 } from "../utils";
 import { useStripe, initStripe } from "@stripe/stripe-react-native";
-
-const audioSource = require("../assets/sounds/feedback.mp3");
 
 // URL de base de l'API
 const API_BASE_URL = "http://5.196.147.213:3000";
 
 const HomeScreen = () => {
-  const player = useAudioPlayer(audioSource);
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
+  const { triggerFeedback, announce } = useAccessibility();
 
   const [modalVisible, setModalVisible] = useState(false);
   const { user } = useAuth();
@@ -60,53 +53,12 @@ const HomeScreen = () => {
   const [hasPermission, setHasPermission] = useState(null);
   const [cameraRef, setCameraRef] = useState(null);
   const [isSimulator, setIsSimulator] = useState(false);
-  const [isScreenReaderEnabled, setIsScreenReaderEnabled] = useState(false);
   const navigation = useNavigation<LoginScreenNavigationProp>();
-
-  const triggerHapticSuccess = () => {
-    if (user.settings.vibrations)
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  };
-
-  const triggerHapticWarning = () => {
-    if (user.settings.vibrations)
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-  };
-
-  const triggerHapticError = () => {
-    if (user.settings.vibrations)
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-  };
-
-  // user.settings.sounds # son boolean
-  // user.settings.vibrations # son vibrations
 
   const [stores, setStores] = useState([]);
   const [selectedStoreId, setSelectedStoreId] = useState(
     "carrefour_sartrouville"
   );
-
-  // Vérifier si VoiceOver est activé
-  useEffect(() => {
-    const checkScreenReaderStatus = async () => {
-      const isEnabled = await AccessibilityInfo.isScreenReaderEnabled();
-      setIsScreenReaderEnabled(isEnabled);
-    };
-
-    checkScreenReaderStatus();
-
-    const subscription = AccessibilityInfo.addEventListener(
-      "screenReaderChanged",
-      setIsScreenReaderEnabled
-    );
-
-    return () => subscription?.remove();
-  }, []);
-
-  // Fonction pour annoncer des messages à VoiceOver
-  const announceToScreenReader = (message) => {
-    AccessibilityInfo.announceForAccessibility(message);
-  };
 
   // Initialiser Stripe
   React.useEffect(() => {
@@ -145,23 +97,18 @@ const HomeScreen = () => {
 
   const takePicture = async () => {
     if (cameraRef) {
-      announceToScreenReader("Prise de photo en cours");
+      announce("Prise de photo en cours");
 
       const photo = await cameraRef.takePictureAsync({
         quality: 0.1,
       });
 
-      triggerHapticSuccess();
-      if (user.settings.sounds) {
-        player.seekTo(0);
-        player.play();
-      }
+      triggerFeedback("success");
 
       setImage(photo.uri);
       sendImage(photo.uri);
-      triggerFeedback();
 
-      announceToScreenReader("Photo prise et envoyée pour analyse");
+      announce("Photo prise et envoyée pour analyse");
     }
   };
 
@@ -198,7 +145,7 @@ const HomeScreen = () => {
 
           // Annoncer les changements du panier
           if (basketData.length > 0) {
-            announceToScreenReader(
+            announce(
               `Panier mis à jour. ${basketData.length} articles`
             );
           }
@@ -207,7 +154,7 @@ const HomeScreen = () => {
         }
       },
       (err) => {
-        triggerHapticError();
+        triggerFeedback("error");
         console.log("Error listening to document:", err);
       }
     );
@@ -244,12 +191,12 @@ const HomeScreen = () => {
       setBasket(updatedBasket);
 
       // Retour haptique et annonce vocale
-      triggerHapticSuccess();
-      announceToScreenReader("Produit supprimé du panier");
+      triggerFeedback("success");
+      announce("Produit supprimé du panier");
     } catch (error) {
       console.log("Erreur lors de la suppression du produit :", error);
-      triggerHapticError();
-      announceToScreenReader("Erreur lors de la suppression du produit");
+      triggerFeedback("error");
+      announce("Erreur lors de la suppression du produit");
       Alert.alert("Erreur", "Impossible de supprimer le produit du panier");
     }
   };
@@ -267,7 +214,7 @@ const HomeScreen = () => {
           style: "destructive",
           onPress: async () => {
             try {
-              announceToScreenReader("Abandon du panier en cours");
+              announce("Abandon du panier en cours");
 
               // Calculer le montant total
               const totalAmount = basket.reduce((sum, item) => {
@@ -300,9 +247,9 @@ const HomeScreen = () => {
 
               setBasket([]);
               setModalVisible(false);
-              triggerHapticSuccess();
+              triggerFeedback("success");
 
-              announceToScreenReader("Panier abandonné avec succès");
+              announce("Panier abandonné avec succès");
 
               Alert.alert(
                 "Panier abandonné",
@@ -310,8 +257,8 @@ const HomeScreen = () => {
               );
             } catch (error) {
               console.log("Erreur lors de l'abandon du panier :", error);
-              announceToScreenReader("Erreur lors de l'abandon du panier");
-              triggerHapticError();
+              announce("Erreur lors de l'abandon du panier");
+              triggerFeedback("error");
               Alert.alert("Erreur", "Impossible d'abandonner le panier");
             }
           },
@@ -343,8 +290,8 @@ const HomeScreen = () => {
           text: "Payer",
           onPress: async () => {
             try {
-              announceToScreenReader("Paiement en cours, veuillez patienter");
-              triggerHapticSuccess();
+              announce("Paiement en cours, veuillez patienter");
+              triggerFeedback("success");
 
               // Récupérer le token API pour l'authentification
               const apiToken =
@@ -411,7 +358,7 @@ const HomeScreen = () => {
                   throw new Error(presentError.message);
                 } else {
                   // L'utilisateur a annulé le paiement
-                  announceToScreenReader("Paiement annulé");
+                  announce("Paiement annulé");
                   return;
                 }
               }
@@ -449,7 +396,7 @@ const HomeScreen = () => {
               setBasket([]);
               setModalVisible(false);
 
-              announceToScreenReader(
+              announce(
                 `Paiement réussi ! Montant payé: ${finalTotalAmount.toFixed(
                   2
                 )} euros`
@@ -470,8 +417,8 @@ const HomeScreen = () => {
               );
             } catch (error) {
               console.log("Erreur lors du paiement :", error);
-              announceToScreenReader("Erreur lors du paiement");
-              triggerHapticError();
+              announce("Erreur lors du paiement");
+              triggerFeedback("error");
 
               Alert.alert(
                 "Erreur de paiement",
@@ -545,10 +492,10 @@ const HomeScreen = () => {
           await updateDoc(storeRef, {
             products: updatedProducts,
           });
-          triggerHapticSuccess();
+          triggerFeedback("success");
           console.log("Produits mis à jour après vente.");
         } else {
-          triggerHapticWarning();
+          triggerFeedback("warning");
           console.warn(
             "Le store n'existe pas pour mettre à jour les produits."
           );
@@ -558,7 +505,7 @@ const HomeScreen = () => {
       return docRef.id;
     } catch (error) {
       console.error("Erreur lors de la création du ticket:", error);
-      triggerHapticError();
+      triggerFeedback("error");
       throw error;
     }
   };
@@ -571,7 +518,7 @@ const HomeScreen = () => {
       return;
     }
 
-    announceToScreenReader("Sélection d'image en cours");
+    announce("Sélection d'image en cours");
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: "images",
@@ -582,7 +529,7 @@ const HomeScreen = () => {
 
     if (!result.canceled) {
       setImage(result.assets[0].uri);
-      announceToScreenReader("Image sélectionnée avec succès");
+      announce("Image sélectionnée avec succès");
     }
   };
 
@@ -598,9 +545,9 @@ const HomeScreen = () => {
       return;
     }
 
-    triggerHapticSuccess();
+    triggerFeedback("success");
 
-    announceToScreenReader("Envoi de l'image pour analyse");
+    announce("Envoi de l'image pour analyse");
 
     const fileType = isSimulator
       ? image.split(".").pop()
@@ -655,13 +602,13 @@ const HomeScreen = () => {
 
       const result = await response.json();
       console.log(result);
-      triggerHapticSuccess();
+      triggerFeedback("success");
 
-      announceToScreenReader("Image analysée avec succès");
+      announce("Image analysée avec succès");
     } catch (error) {
       console.error("Erreur lors de l'envoi de l'image :", error);
-      announceToScreenReader("Erreur lors de l'envoi de l'image");
-      triggerHapticError();
+      announce("Erreur lors de l'envoi de l'image");
+      triggerFeedback("error");
       Alert.alert("Erreur", "L'envoi de l'image a échoué");
     }
   };
@@ -693,9 +640,9 @@ const HomeScreen = () => {
           onBarcodeScanned={async ({ data }) => {
             if (hasScanned) return;
             setHasScanned(true);
-            triggerHapticSuccess();
+            triggerFeedback("success");
 
-            announceToScreenReader("QR Code détecté, vérification en cours");
+            announce("QR Code détecté, vérification en cours");
 
             try {
               const scannedId = data.trim();
@@ -705,20 +652,20 @@ const HomeScreen = () => {
               if (storeSnap.exists()) {
                 setSelectedStoreId(scannedId);
                 setErrorMessage("");
-                announceToScreenReader(
+                announce(
                   `Connexion réussie au magasin ${scannedId}`
                 );
                 setTimeout(() => setHasScanned(false), 2000);
               } else {
                 setErrorMessage("Ce magasin n'existe pas.");
-                announceToScreenReader("Erreur : Ce magasin n'existe pas");
+                announce("Erreur : Ce magasin n'existe pas");
                 setTimeout(() => setHasScanned(false), 2000);
               }
             } catch (err) {
               console.error("Erreur lors de la vérification du magasin :", err);
               setErrorMessage("Une erreur est survenue.");
-              triggerHapticError();
-              announceToScreenReader(
+              triggerFeedback("error");
+              announce(
                 "Une erreur est survenue lors de la vérification"
               );
               setTimeout(() => setHasScanned(false), 2000);
@@ -817,7 +764,7 @@ const HomeScreen = () => {
                           text: store.shopName || store.id,
                           onPress: () => {
                             setSelectedStoreId(store.id);
-                            announceToScreenReader(
+                            announce(
                               `Magasin changé pour ${store.name || store.id}`
                             );
                           },
@@ -827,7 +774,7 @@ const HomeScreen = () => {
                             text: "Disconnect",
                             onPress: () => {
                               setSelectedStoreId(null);
-                              announceToScreenReader("Déconnecté du magasin");
+                              announce("Déconnecté du magasin");
                             },
                           },
                           { text: "Non", onPress: () => {} },

@@ -10,6 +10,8 @@ interface ExtendedUser extends User {
     sounds: boolean;
     vibrations: boolean;
     colorBlindMode: boolean;
+    highContrast?: boolean;
+    reduceMotion?: boolean;
   };
 }
 

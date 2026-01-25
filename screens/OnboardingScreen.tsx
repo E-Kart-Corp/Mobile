@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LoginScreenNavigationProp } from "./authStack/LoginScreen";
 import { ONBOARDING_STORAGE_KEY } from "../storageKeys";
+import { useAccessibility } from "../accessibilityContext";
 
 type OnboardingRouteProp = RouteProp<{ Onboarding: { replay?: boolean } }, "Onboarding">;
 
@@ -64,12 +65,18 @@ const slides = [
 const OnboardingScreen = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const route = useRoute<OnboardingRouteProp>();
+  const { announce, triggerFeedback, shouldReduceMotion } = useAccessibility();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const flatListRef = useRef<FlatList>(null);
 
   const isReplay = route.params?.replay === true;
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const slide = slides[currentIndex];
+    announce(`Étape ${currentIndex + 1} sur ${slides.length}, ${slide.title}. ${slide.description}`);
+  }, [currentIndex]);
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: { index: number }[] }) => {
@@ -84,10 +91,11 @@ const OnboardingScreen = () => {
   }).current;
 
   const handleNext = () => {
+    triggerFeedback("selection");
     if (currentIndex < slides.length - 1) {
       flatListRef.current?.scrollToIndex({
         index: currentIndex + 1,
-        animated: true,
+        animated: !shouldReduceMotion,
       });
     } else {
       handleComplete();
@@ -95,10 +103,11 @@ const OnboardingScreen = () => {
   };
 
   const handlePrev = () => {
+    triggerFeedback("selection");
     if (currentIndex > 0) {
       flatListRef.current?.scrollToIndex({
         index: currentIndex - 1,
-        animated: true,
+        animated: !shouldReduceMotion,
       });
     }
   };
@@ -120,6 +129,7 @@ const OnboardingScreen = () => {
   };
 
   const handleSkip = () => {
+    triggerFeedback("selection");
     handleComplete();
   };
 
@@ -142,6 +152,7 @@ const OnboardingScreen = () => {
         style={[styles.skipButton, { top: insets.top + 8 }]}
         accessible={true}
         accessibilityLabel="Passer le tutoriel"
+        accessibilityHint="Ferme le tutoriel et accède à l'application"
         accessibilityRole="button"
       >
         <Text style={styles.skipText}>Passer</Text>
@@ -163,6 +174,8 @@ const OnboardingScreen = () => {
           index,
         })}
         bounces={false}
+        accessible={true}
+        accessibilityLabel="Tutoriel de présentation. Faites glisser pour changer d'étape."
       />
 
       <View style={styles.footer}>
@@ -185,6 +198,7 @@ const OnboardingScreen = () => {
               style={styles.secondaryButton}
               accessible={true}
               accessibilityLabel="Étape précédente"
+              accessibilityHint="Revenir à l'étape précédente du tutoriel"
               accessibilityRole="button"
             >
               <Ionicons name="chevron-back" size={22} color="#007A5E" />
@@ -197,6 +211,7 @@ const OnboardingScreen = () => {
             style={[styles.primaryButton, currentIndex === 0 && styles.primaryButtonFullWidth]}
             accessible={true}
             accessibilityLabel={isLast ? (isReplay ? "Fermer" : "Commencer") : "Étape suivante"}
+            accessibilityHint={isLast ? "Terminer le tutoriel" : "Passer à l'étape suivante"}
             accessibilityRole="button"
           >
             <Text style={styles.primaryButtonText}>
