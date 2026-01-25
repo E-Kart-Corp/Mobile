@@ -6,6 +6,8 @@ import {
   FlatList,
   StyleSheet,
   useWindowDimensions,
+  Linking,
+  Alert,
 } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,7 +17,10 @@ import { LoginScreenNavigationProp } from "./authStack/LoginScreen";
 import { ONBOARDING_STORAGE_KEY } from "../storageKeys";
 import { useAccessibility } from "../accessibilityContext";
 
-type OnboardingRouteProp = RouteProp<{ Onboarding: { replay?: boolean } }, "Onboarding">;
+type OnboardingRouteProp = RouteProp<
+  { Onboarding: { replay?: boolean } },
+  "Onboarding"
+>;
 
 const slides = [
   {
@@ -25,19 +30,19 @@ const slides = [
     description:
       "Faites vos courses en toute simplicité en scannant vos produits. Plus besoin de faire la queue à la caisse.",
   },
-  {
+  /* {
     id: "2",
     icon: "qr-code" as const,
     title: "Connectez-vous au magasin",
     description:
-      "Scannez le QR code à l'entrée du commerce pour vous connecter. En mode simulateur, vous pouvez choisir un magasin dans la liste.",
-  },
+      "Scannez le QR code à l'entrée du commerce pour vous connecter.",
+  }, */
   {
     id: "3",
     icon: "camera" as const,
     title: "Scannez vos produits",
     description:
-      "Prenez une photo du produit avec la caméra (ou sélectionnez une image en simulateur). Notre intelligence artificielle identifie le produit et l'ajoute automatiquement à votre panier.",
+      "Prenez une photo du produit avec la caméra. Notre intelligence artificielle identifie le produit et l'ajoute automatiquement à votre panier. M",
   },
   {
     id: "4",
@@ -75,7 +80,9 @@ const OnboardingScreen = () => {
 
   useEffect(() => {
     const slide = slides[currentIndex];
-    announce(`Étape ${currentIndex + 1} sur ${slides.length}, ${slide.title}. ${slide.description}`);
+    announce(
+      `Étape ${currentIndex + 1} sur ${slides.length}, ${slide.title}. ${slide.description}`,
+    );
   }, [currentIndex]);
 
   const onViewableItemsChanged = useRef(
@@ -83,7 +90,7 @@ const OnboardingScreen = () => {
       if (viewableItems.length > 0) {
         setCurrentIndex(viewableItems[0].index ?? 0);
       }
-    }
+    },
   ).current;
 
   const viewabilityConfig = useRef({
@@ -130,6 +137,12 @@ const OnboardingScreen = () => {
 
   const handleSkip = () => {
     triggerFeedback("selection");
+
+    Alert.alert(
+      "‼️ Attention ‼️",
+      "Cette application est en cours de développement. Elle n'est pas encore disponible en production. Et que toutes les données sont a titre d'exemple.",
+      [{ text: "Fermer", style: "cancel" }],
+    );
     handleComplete();
   };
 
@@ -145,8 +158,23 @@ const OnboardingScreen = () => {
 
   const isLast = currentIndex === slides.length - 1;
 
+  useEffect(() => {
+    if (currentIndex === slides.length - 1) {
+      Alert.alert(
+        "Attention ‼️",
+        "Cette application est en cours de développement. Elle n'est pas encore disponible en production. Et que toutes les données sont a titre d'exemple.",
+        [{ text: "Fermer", style: "cancel" }],
+      );
+    }
+  }, [isLast]);
+
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top, paddingBottom: insets.bottom },
+      ]}
+    >
       <TouchableOpacity
         onPress={handleSkip}
         style={[styles.skipButton, { top: insets.top + 8 }]}
@@ -208,10 +236,17 @@ const OnboardingScreen = () => {
 
           <TouchableOpacity
             onPress={handleNext}
-            style={[styles.primaryButton, currentIndex === 0 && styles.primaryButtonFullWidth]}
+            style={[
+              styles.primaryButton,
+              currentIndex === 0 && styles.primaryButtonFullWidth,
+            ]}
             accessible={true}
-            accessibilityLabel={isLast ? (isReplay ? "Fermer" : "Commencer") : "Étape suivante"}
-            accessibilityHint={isLast ? "Terminer le tutoriel" : "Passer à l'étape suivante"}
+            accessibilityLabel={
+              isLast ? (isReplay ? "Fermer" : "Commencer") : "Étape suivante"
+            }
+            accessibilityHint={
+              isLast ? "Terminer le tutoriel" : "Passer à l'étape suivante"
+            }
             accessibilityRole="button"
           >
             <Text style={styles.primaryButtonText}>
@@ -221,7 +256,9 @@ const OnboardingScreen = () => {
                   : "C'est parti !"
                 : "Suivant"}
             </Text>
-            {!isLast && <Ionicons name="chevron-forward" size={22} color="#fff" />}
+            {!isLast && (
+              <Ionicons name="chevron-forward" size={22} color="#fff" />
+            )}
           </TouchableOpacity>
         </View>
       </View>

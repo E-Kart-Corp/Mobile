@@ -45,7 +45,7 @@ const LoginScreen = () => {
       announce("Connexion réussie");
       triggerFeedback("success");
       const hasCompletedOnboarding =
-        (await AsyncStorage.getItem(ONBOARDING_STORAGE_KEY)) === "true";
+        (await AsyncStorage.getItem(ONBOARDING_STORAGE_KEY)) === "false";
       navigation.reset({
         index: 0,
         routes: [
