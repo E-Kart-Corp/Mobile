@@ -11,6 +11,7 @@ import SignUp from "./screens/authStack/SignUp";
 import CheckForm from "./screens/CheckForm";
 import TicketsScreen from "./screens/TicketScreen";
 import ProfileScreen from "./screens/ProfileScreen";
+import OnboardingScreen from "./screens/OnboardingScreen";
 import { AuthProvider } from "./authContext";
 
 const Tab = createBottomTabNavigator();
@@ -54,6 +55,11 @@ export default function App() {
           <Stack.Screen
             name="SignUp"
             component={SignUp}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Onboarding"
+            component={OnboardingScreen}
             options={{ headerShown: false }}
           />
           <Stack.Screen

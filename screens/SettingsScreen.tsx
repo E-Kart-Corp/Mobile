@@ -226,6 +226,25 @@ const SettingsContent = () => {
         />
       </View>
 
+      {/* Section Aide */}
+      <View style={styles.sectionContainer}>
+        <Text style={styles.sectionTitle}>Aide</Text>
+
+        <TouchableOpacity
+          onPress={() => navigation.navigate("Onboarding", { replay: true })}
+          style={styles.helpItem}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Revoir le tutoriel"
+          accessibilityHint="Ouvre le tutoriel de prise en main de l'application"
+        >
+          <Text style={styles.settingTitle}>Revoir le tutoriel</Text>
+          <Text style={styles.settingDescription}>
+            Revoir le guide de prise en main de l'application
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Bouton Retour au profil */}
       <TouchableOpacity
         onPress={() => navigation.goBack()}
@@ -291,6 +310,9 @@ const styles = {
     paddingVertical: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
+  },
+  helpItem: {
+    paddingVertical: 15,
   },
   settingTextContainer: {
     flex: 1,

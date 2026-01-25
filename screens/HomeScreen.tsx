@@ -42,11 +42,16 @@ import * as Haptics from "expo-haptics";
 
 import ReactNativeHapticFeedback from "react-native-haptic-feedback";
 import { sha1 } from "../utils";
+import { useStripe, initStripe } from "@stripe/stripe-react-native";
 
 const audioSource = require("../assets/sounds/feedback.mp3");
 
+// URL de base de l'API
+const API_BASE_URL = "http://5.196.147.213:3000";
+
 const HomeScreen = () => {
   const player = useAudioPlayer(audioSource);
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
   const [modalVisible, setModalVisible] = useState(false);
   const { user } = useAuth();
@@ -102,6 +107,30 @@ const HomeScreen = () => {
   const announceToScreenReader = (message) => {
     AccessibilityInfo.announceForAccessibility(message);
   };
+
+  // Initialiser Stripe
+  React.useEffect(() => {
+    const initializeStripe = async () => {
+      const stripePublishableKey = "pk_test_51Pz32cRsgOZX0KhASPKWQ10QxWcAHn4HCbEu54KqBukiPyltbS4BgijcBjkJMFYsbnCudKFDr6xpGyDenq0TZCKX00ylzml6Ro"
+        // process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ||
+        // Constants?.expoConfig?.extra?.stripePublishableKey ||
+        // Constants?.manifest2?.extra?.stripePublishableKey ||
+        // Constants?.manifest?.extra?.stripePublishableKey;
+
+      if (stripePublishableKey) {
+        await initStripe({
+          publishableKey: stripePublishableKey,
+          merchantIdentifier: "merchant.com.ekart",
+        });
+      } else {
+        console.warn(
+          "Stripe publishable key is not configured. Payment will not work."
+        );
+      }
+    };
+
+    initializeStripe();
+  }, []);
 
   React.useEffect(() => {
     (async () => {
@@ -315,14 +344,81 @@ const HomeScreen = () => {
           onPress: async () => {
             try {
               announceToScreenReader("Paiement en cours, veuillez patienter");
-
               triggerHapticSuccess();
 
-              // Simuler un délai de paiement
-              Alert.alert("Paiement en cours...", "Veuillez patienter");
+              // Récupérer le token API pour l'authentification
+              const apiToken =
+                process.env.EXPO_PUBLIC_API_TOKEN ||
+                Constants?.expoConfig?.extra?.apiToken ||
+                Constants?.manifest2?.extra?.apiToken ||
+                Constants?.manifest?.extra?.apiToken;
 
-              // Calculer le montant total
-              const totalAmount = basket.reduce((sum, item) => {
+              let hashedApiKey = null;
+              if (apiToken) {
+                try {
+                  hashedApiKey = await sha1(apiToken);
+                } catch (err) {
+                  console.warn("Unable to hash API token", err);
+                }
+              }
+
+              // Appeler l'endpoint pour créer le PaymentIntent
+              const response = await fetch(
+                `${API_BASE_URL}/client/createPaymentIntent`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    ...(hashedApiKey ? { "x-api-key": hashedApiKey } : {}),
+                  },
+                  body: JSON.stringify({
+                    amount: Math.round(totalAmount * 100), // Convertir en centimes
+                    currency: "eur",
+                    userId: user.uid,
+                    storeId: selectedStoreId,
+                  }),
+                }
+              );
+
+              if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(
+                  errorData.error || "Erreur lors de la création du PaymentIntent"
+                );
+              }
+
+              const { clientSecret } = await response.json();
+
+              if (!clientSecret) {
+                throw new Error("Client secret manquant dans la réponse");
+              }
+
+              // Initialiser le PaymentSheet avec le clientSecret
+              const { error: initError } = await initPaymentSheet({
+                paymentIntentClientSecret: clientSecret,
+                merchantDisplayName: "E-Kart",
+              });
+
+              if (initError) {
+                throw new Error(initError.message);
+              }
+
+              // Présenter le PaymentSheet
+              const { error: presentError } = await presentPaymentSheet();
+
+              if (presentError) {
+                if (presentError.code !== "Canceled") {
+                  throw new Error(presentError.message);
+                } else {
+                  // L'utilisateur a annulé le paiement
+                  announceToScreenReader("Paiement annulé");
+                  return;
+                }
+              }
+
+              // Paiement réussi
+              // Calculer le montant total pour le ticket
+              const finalTotalAmount = basket.reduce((sum, item) => {
                 const price = parseFloat(item?.price);
                 const quantity = item?.quantity || 1;
 
@@ -338,7 +434,7 @@ const HomeScreen = () => {
                 "completed",
                 basket,
                 selectedStoreId,
-                totalAmount
+                finalTotalAmount
               );
 
               // Vider le panier après paiement réussi
@@ -353,28 +449,25 @@ const HomeScreen = () => {
               setBasket([]);
               setModalVisible(false);
 
-              // Simuler un délai puis afficher succès
-              setTimeout(() => {
-                announceToScreenReader(
-                  `Paiement réussi ! Montant payé: ${totalAmount.toFixed(
-                    2
-                  )} euros`
-                );
+              announceToScreenReader(
+                `Paiement réussi ! Montant payé: ${finalTotalAmount.toFixed(
+                  2
+                )} euros`
+              );
 
-                Alert.alert(
-                  "Paiement réussi ! 🎉",
-                  `Montant payé: ${totalAmount.toFixed(
-                    2
-                  )}€\nMerci pour votre achat !`,
-                  [
-                    {
-                      text: "Voir mes tickets",
-                      onPress: () => navigation.navigate("TicketsScreen"),
-                    },
-                    { text: "OK" },
-                  ]
-                );
-              }, 1500);
+              Alert.alert(
+                "Paiement réussi ! 🎉",
+                `Montant payé: ${finalTotalAmount.toFixed(
+                  2
+                )}€\nMerci pour votre achat !`,
+                [
+                  {
+                    text: "Voir mes tickets",
+                    onPress: () => navigation.navigate("TicketsScreen"),
+                  },
+                  { text: "OK" },
+                ]
+              );
             } catch (error) {
               console.log("Erreur lors du paiement :", error);
               announceToScreenReader("Erreur lors du paiement");
@@ -382,7 +475,7 @@ const HomeScreen = () => {
 
               Alert.alert(
                 "Erreur de paiement",
-                "Le paiement a échoué. Veuillez réessayer."
+                error.message || "Le paiement a échoué. Veuillez réessayer."
               );
             }
           },
@@ -549,8 +642,7 @@ const HomeScreen = () => {
 
     try {
       const response = await fetch(
-        // `http://51.210.212.247:3000/client/checkProduct/${selectedStoreId}/${user?.uid}`,
-        `http://5.196.147.213:3000/client/checkProduct/${selectedStoreId}/${user?.uid}`,
+        `${API_BASE_URL}/client/checkProduct/${selectedStoreId}/${user?.uid}`,
         {
           method: "POST",
           body: formData,
@@ -722,7 +814,7 @@ const HomeScreen = () => {
                     "Souhaitez-vous vous déconnecter ?",
                     isSimulator
                       ? stores.map((store) => ({
-                          text: store.name || store.id,
+                          text: store.shopName || store.id,
                           onPress: () => {
                             setSelectedStoreId(store.id);
                             announceToScreenReader(

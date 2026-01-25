@@ -10,14 +10,17 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { auth } from "../../config";
 import { BackGround } from "../../component/background";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ONBOARDING_STORAGE_KEY } from "../../storageKeys";
 
 import { StackNavigationProp } from "@react-navigation/stack";
 
 type AuthStackParamList = {
   TabStack: undefined;
+  Onboarding: { replay?: boolean };
   LostPassword: undefined;
   CheckForm: undefined;
   SignUp: undefined;
@@ -38,9 +41,13 @@ const LoginScreen = () => {
   const handleLogin = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      const hasCompletedOnboarding =
+        (await AsyncStorage.getItem(ONBOARDING_STORAGE_KEY)) === "false";
       navigation.reset({
         index: 0,
-        routes: [{ name: "TabStack" }],
+        routes: [
+          { name: hasCompletedOnboarding ? "TabStack" : "Onboarding" },
+        ],
       });
     } catch (error: any) {
       console.log("Firebase login error:", error);
