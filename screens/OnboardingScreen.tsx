@@ -42,7 +42,7 @@ const slides = [
     icon: "camera" as const,
     title: "Scannez vos produits",
     description:
-      "Prenez une photo du produit avec la caméra. Notre intelligence artificielle identifie le produit et l'ajoute automatiquement à votre panier. M",
+      "Prenez une photo du produit avec la caméra. Notre intelligence artificielle identifie le produit et l'ajoute automatiquement à votre panier. Pour l'instant\n ‼️Bouteille Orangina, Fanta, 7up, Canette de Pespsi, Monster Energy, Coca‼️",
   },
   {
     id: "4",
