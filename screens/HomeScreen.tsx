@@ -41,7 +41,8 @@ import { sha1 } from "../utils";
 import { useStripe, initStripe } from "@stripe/stripe-react-native";
 
 // URL de base de l'API
-const API_BASE_URL = "http://5.196.147.213:3000";
+const API_BASE_URL = "http://192.168.1.22:3000";
+// const API_BASE_URL = "http://5.196.147.213:3000";
 
 const HomeScreen = () => {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
@@ -58,7 +59,7 @@ const HomeScreen = () => {
 
   const [stores, setStores] = useState([]);
   const [selectedStoreId, setSelectedStoreId] = useState(
-    "carrefour_sartrouville"
+    ""
   );
 
   // Initialiser Stripe
