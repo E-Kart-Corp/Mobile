@@ -140,7 +140,7 @@ const ProfileUser = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editedInfo, setEditedInfo] = useState({});
   const [loading, setLoading] = useState(true);
-  const navigation = useState();
+  const navigation = useNavigation<LoginScreenNavigationProp>();
 
   const fetchUserInfo = async () => {
     if (!user?.uid) return;
@@ -216,7 +216,7 @@ const ProfileUser = () => {
                 await deleteUser(userAuth);
               }
 
-              navigation?.reset({
+              navigation.reset({
                 index: 0,
                 routes: [{ name: "Login" }],
               });
@@ -399,6 +399,34 @@ const ProfileUser = () => {
           ]}
         >
           {isColorBlindMode ? "🗑️ " : ""}Effacer mes informations
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={handleDeleteAccount}
+        style={[
+          theme.buttonStyle,
+          {
+            marginTop: 10,
+            paddingHorizontal: 20,
+            paddingVertical: 10,
+            borderRadius: 5,
+            backgroundColor: theme.danger,
+            borderColor: theme.danger,
+            borderWidth: isColorBlindMode ? 2 : 0,
+          },
+        ]}
+      >
+        <Text
+          style={[
+            theme.textStyle,
+            {
+              color: theme.surface,
+              textAlign: "center",
+            },
+          ]}
+        >
+          {isColorBlindMode ? "⚠️ " : ""}Supprimer mon compte
         </Text>
       </TouchableOpacity>
 
